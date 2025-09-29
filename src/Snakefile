@@ -6,7 +6,7 @@ print(sample_names)
 
 rule all:
     input:
-        expand("outputs/trimmed/{sample}_extracted_trimmed_R1.fastq.gz", sample=sample_names)
+        expand("outputs/aligned/{sample}_extracted_trimmed_R1.aligned.out.bam", sample=sample_names)
 
 rule idemux:
     input:
@@ -51,4 +51,21 @@ rule cutadapt:
         cutadapt --quiet -m 20 -O 3 --nextseq-trim=10 -a "r1adapter=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC;min_overlap=3;max_error_rate=0.100000" - | \
         cutadapt --quiet -m 20 -O 3 -a "r1polyA=A{{18}}" - | \
         cutadapt --quiet -m 20 -O 20 -g "r1adapter=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC;min_overlap=20" --discard-trimmed -o {output.r1_trimmed} -
+        """
+
+rule align:
+    input:
+        r1_trimmed="outputs/trimmed/{sample}_extracted_trimmed_R1.fastq.gz"
+    params:
+        genome=config["align"]["genome_dir"],
+        threads=config["align"]["threads"],
+        prefix="{sample}_extracted_trimmed_R1"
+    output: "outputs/aligned/{sample}_extracted_trimmed_R1.aligned.out.bam"
+    shell:
+        """
+        STAR --runThreadN {params.threads} --readFilesCommand zcat --genomeDir {params.genome} --readFilesIn {input.r1_trimmed} \
+        --outFilterType BySJout --outFilterMultimapNmax 200 --alignSJoverhangMin 8 --alignSJDBoverhangMin 1 --outFilterMismatchNmax 999 \
+        --outFilterMismatchNoverLmax 0.6 --alignIntronMin 20 --alignIntronMax 1000000 --alignMatesGapMax 1000000 --limitOutSJcollapsed 5000000 \
+        --limitIObufferSize 50000000 50000000 --outSAMattributes NH HI NM MD --outSAMtype BAM SortedByCoordinate --outFileNamePrefix {params.prefix} \
+        --limitBAMsortRAM 500000000 --genomeLoad LoadAndKeep
         """
