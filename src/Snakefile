@@ -6,7 +6,7 @@ print(sample_names)
 
 rule all:
     input:
-        expand("outputs/aligned/{sample}.Aligned.sortedByCoord.out.bam", sample=sample_names)
+        "outputs/gene_counts.tsv"
 
 rule idemux:
     input:
@@ -69,4 +69,40 @@ rule align:
         --outFilterMismatchNoverLmax 0.6 --alignIntronMin 20 --alignIntronMax 1000000 --alignMatesGapMax 1000000 --limitOutSJcollapsed 5000000 \
         --limitIObufferSize 500000 500000 --outSAMattributes NH HI NM MD --outSAMtype BAM SortedByCoordinate --outFileNamePrefix {params.prefix} \
         --limitBAMsortRAM 5000000 --genomeLoad LoadAndKeep
+        """
+rule index:
+    input: "outputs/aligned/{sample}.Aligned.sortedByCoord.out.bam"
+    output: "outputs/aligned/{sample}.Aligned.sortedByCoord.out.bam.bai"
+    shell:
+        """
+        samtools index {input}
+        """
+
+rule dedup:
+    input: 
+        alignment="outputs/aligned/{sample}.Aligned.sortedByCoord.out.bam",
+        index="outputs/aligned/{sample}.Aligned.sortedByCoord.out.bam.bai"
+    output: "outputs/dedup/{sample}.dedup.bam"
+    shell:
+        """
+        umi_tools dedup -I {input.alignment} -S {output} --multimapping-detection-method=NH \
+        --output-stats=outputs/dedup/deduplicated.txt --log=outputs/dedup/deduplication.log
+            """
+rule index2:
+    input: "outputs/dedup/{sample}.dedup.bam"
+    output: "outputs/dedup/{sample}.dedup.bam.bai"
+    shell:
+        """
+        samtools index {input}
+        """
+rule featureCounts:
+    input: 
+        alignments=expand("outputs/dedup/{sample}.dedup.bam", sample=sample_names)
+    params:
+        annotation="res/genome/gencode.v49.basic.annotation.gtf"
+    output: "outputs/gene_counts.tsv"
+    shell:
+        """
+        featureCounts -s 1 -T 4 -t exon -g gene_id -a {params.annotation} \
+        -o {output} {input.alignments}
         """
