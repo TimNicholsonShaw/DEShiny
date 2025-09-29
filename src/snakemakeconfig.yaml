@@ -1,0 +1,4 @@
+sample_sheet: res/sample-sheet.csv
+demux:
+  r1: res/R1.fastq.gz
+  r2: res/R2.fastq.gz

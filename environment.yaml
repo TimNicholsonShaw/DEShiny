@@ -3,11 +3,15 @@ channels:
   - conda-forge
   - bioconda
   - dranew
+  - nodefaults
 dependencies:
   - python>=3.09
   - samtools=1.22.1
   - star=2.7.11b
   - snakemake=9.11.6
   - bcl2fastq=2.19.0
-  - setuptools
+  - setuptools=80.9.0
   - umi_tools=1.1.6
+  - idemux=0.1.6
+  - cutadapt=5.1
+  - subread=2.1.1

@@ -1,0 +1,54 @@
+import pandas as pd 
+import yaml
+
+sample_names = list(pd.read_csv(config["sample_sheet"])["sample_name"])
+print(sample_names)
+
+rule all:
+    input:
+        expand("outputs/trimmed/{sample}_extracted_trimmed_R1.fastq.gz", sample=sample_names)
+
+rule idemux:
+    input:
+        r1=config["demux"]["r1"],
+        r2=config["demux"]["r2"],
+        sample_sheet=config["sample_sheet"]
+    output:
+        out_dir=directory("outputs/idemultiplexed/"),
+        r1_fastq=expand("outputs/idemultiplexed/{sample}_R1.fastq.gz", sample=sample_names),
+        r2_fastq=expand("outputs/idemultiplexed/{sample}_R2.fastq.gz", sample=sample_names)
+    shell:
+        """
+        idemux --r1 {input.r1} --r2 {input.r2} --sample-sheet {input.sample_sheet} --out {output.out_dir}
+        """
+
+rule extract_umi:
+    input:
+        r1= "outputs/idemultiplexed/{sample}_R1.fastq.gz",
+        r2= "outputs/idemultiplexed/{sample}_R2.fastq.gz"
+    params:
+        extract_method="string",
+        bc_pattern="X",
+        bc_pattern2="NNNNNNNNNN"
+    log: "logs/{sample}_extraction_log"
+    output:
+        r1_extracted="outputs/extracted/{sample}_extracted_R1.fastq.gz"
+    shell:
+        """
+        umi_tools extract --extract-method={params.extract_method} --bc-pattern {params.bc_pattern} \
+        --bc-pattern2 {params.bc_pattern2} -L {log} -S {output.r1_extracted} \
+        -I {input.r1} --read2-in={input.r2} --read2-out=/dev/null
+        """
+
+rule cutadapt:
+    input:
+        r1_extracted="outputs/extracted/{sample}_extracted_R1.fastq.gz"
+    output:
+        r1_trimmed="outputs/trimmed/{sample}_extracted_trimmed_R1.fastq.gz"
+    shell:
+        """
+        cutadapt --quiet -m 20 -O 20 -a "polyA=A{{20}}" -a "QUALITY=G{{20}}" -n 2 {input.r1_extracted} | \
+        cutadapt --quiet -m 20 -O 3 --nextseq-trim=10 -a "r1adapter=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC;min_overlap=3;max_error_rate=0.100000" - | \
+        cutadapt --quiet -m 20 -O 3 -a "r1polyA=A{{18}}" - | \
+        cutadapt --quiet -m 20 -O 20 -g "r1adapter=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC;min_overlap=20" --discard-trimmed -o {output.r1_trimmed} -
+        """

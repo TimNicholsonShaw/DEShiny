@@ -44,15 +44,27 @@ RUN --mount=type=cache,target=/root/.cache/conda \
     conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r && \
     conda env create -f environment.yaml
 
-SHELL ["conda", "run","--no-capture-output", "-n", "test-env", "/bin/bash", "-c" ]
-# RUN STAR
-# RUN samtools --version
-# Switch to the non-privileged user to run the application.
-# USER appuser
+
+#USER appuser
 
 # Copy the source code into the container.
 COPY . .
-
+VOLUME /app/res
 # Run the application.
-# CMD ["tail", "-f", "/dev/null"]
-CMD  conda run --no-capture-output -n test-env umi_tools --version && tail -f /dev/null
+#CMD ["tail", "-f", "/dev/null"]
+#CMD  conda run --no-capture-output -n test-env umi_tools --version && tail -f /dev/null
+
+# default jupyter port is 8888
+# EXPOSE 8888
+#CMD conda run --no-capture-output -n test-env jupyter notebook --ip 0.0.0.0 --no-browser --allow-root
+
+CMD conda run --no-capture-output -n test-env \
+snakemake --snakefile src/Snakefile \
+--configfile src/snakemakeconfig.yaml \
+--cores 2 \
+&& tail -f /dev/null
+
+
+
+
+
