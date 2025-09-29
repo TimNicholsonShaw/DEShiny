@@ -1,10 +1,13 @@
-import pandas as pd 
-import yaml
 
-with open("src/snakemakeconfig.yaml") as file:
-    config_data=yaml.safe_load(file)
 
-print(config_data)
+flag = 0
+with open("res/genome/GRCh38.primary_assembly.genome.fa", 'r') as file:
+    with open("res/genome/GRCh38_chr20.fa", "w") as out_file:
+        for line in file:
+            if line.startswith(">chr20"):
+                flag=1
+            elif line.startswith(">"):
+                flag=0
 
-df = pd.read_csv(config_data["sample_sheet"])
-print(list(df["sample_name"]))
+            if flag:
+                out_file.write(line)

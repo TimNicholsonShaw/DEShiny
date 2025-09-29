@@ -61,5 +61,5 @@ VOLUME /app/res
 CMD conda run --no-capture-output -n test-env \
 snakemake --snakefile src/Snakefile \
 --configfile src/snakemakeconfig.yaml \
---cores 2 --keep-incomplete\
+--cores 4 --keep-incomplete\
 & tail -f /dev/null
