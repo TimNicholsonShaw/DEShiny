@@ -56,24 +56,26 @@ rule cutadapt:
 
 
 rule get_genome_and_annotation:
-    input: 
+    output:
+        genome_fasta="res/genome/genome_fasta.fastq",
+        genome_annotation="res/genome/genome_annotation.gtf"
+    params:
         genome_fasta_location=config["align"]["genome_fasta_location"],
         genome_annotation_location=config["align"]["genome_annotation_location"]
-    output:
-        genome_fasta="res/genome/genome_fasta.fastq.gz",
-        genome_annotation="res/genome/genome_annotation.gtf.gz"
     threads: 1
     shell:
         """
-        mkdir res/genome
-        wget -O res/genome/genome_fasta.fastq.gz {input.genome_fasta_location}
-        wget -O res/genome/genome_annotation.gtf.gz {input.genome_annotation_location}
+        mkdir -p res/genome
+        wget -O res/genome/genome_fasta.fastq.gz {params.genome_fasta_location}
+        wget -O res/genome/genome_annotation.gtf.gz {params.genome_annotation_location}
+        gunzip res/genome/genome_fasta.fastq.gz
+        gunzip res/genome/genome_annotation.gtf.gz
         """
 
 rule make_star_index:
     input:
-        genome_fasta="res/genome/genome_fasta.fastq.gz",
-        genome_annotation="res/genome/genome_annotation.gtf.gz"
+        genome_fasta="res/genome/genome_fasta.fastq",
+        genome_annotation="res/genome/genome_annotation.gtf"
     output: 
         "res/genome/genome",
         "res/genome/Log.out"
@@ -87,7 +89,7 @@ rule make_star_index:
         --sjdbGTFfile {input.genome_annotation} --sjdbOverhang {params.sjdb_overhang}
         """
 
-rule align:
+rule star_align:
     input:
         r1_trimmed="outputs/trimmed/{sample}_extracted_trimmed_R1.fastq.gz",
         index_loc="res/genome/genome"

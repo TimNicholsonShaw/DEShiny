@@ -12,18 +12,6 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# Create a non-privileged user that the app will run under.
-# See https://docs.docker.com/go/dockerfile-user-best-practices/
-# ARG UID=10001
-# RUN adduser \
-#     --disabled-password \
-#     --gecos "" \
-#     --home "/nonexistent" \
-#     --shell "/sbin/nologin" \
-#     --no-create-home \
-#     --uid "${UID}" \
-#     appuser
-
 # add wget to image
 RUN  apt-get update \
   && apt-get install -y wget \
@@ -44,19 +32,11 @@ RUN --mount=type=cache,target=/root/.cache/conda \
     conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r && \
     conda env create -f environment.yaml
 
-
-#USER appuser
-
 # Copy the source code into the container.
 COPY . .
-#VOLUME /app/res
-# Run the application.
-#CMD ["tail", "-f", "/dev/null"]
-#CMD  conda run --no-capture-output -n test-env umi_tools --version && tail -f /dev/null
 
-# default jupyter port is 8888
-# EXPOSE 8888
-#CMD conda run --no-capture-output -n test-env jupyter notebook --ip 0.0.0.0 --no-browser --allow-root
+# use this command to stop the container from shutting down
+#CMD ["tail", "-f", "/dev/null"]
 
 CMD conda run --no-capture-output -n test-env \
 snakemake --snakefile src/Snakefile \

@@ -1,7 +1,7 @@
-sample_sheet: res/sample-sheet.csv
+sample_sheet: tests/sample-sheet.csv
 demux:
-  r1: res/R1.fastq.gz
-  r2: res/R2.fastq.gz
+  r1: tests/R1.fastq.gz
+  r2: tests/R2.fastq.gz
 align:
   threads: 4
   genome_fasta_location: https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_49/GRCh38.primary_assembly.genome.fa.gz #url for downloading using wget
