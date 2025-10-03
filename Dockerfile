@@ -49,7 +49,7 @@ RUN --mount=type=cache,target=/root/.cache/conda \
 
 # Copy the source code into the container.
 COPY . .
-VOLUME /app/res
+#VOLUME /app/res
 # Run the application.
 #CMD ["tail", "-f", "/dev/null"]
 #CMD  conda run --no-capture-output -n test-env umi_tools --version && tail -f /dev/null
