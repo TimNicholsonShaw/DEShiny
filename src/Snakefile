@@ -89,15 +89,15 @@ rule make_star_index:
 
 rule align:
     input:
-        r1_trimmed="outputs/trimmed/{sample}_extracted_trimmed_R1.fastq.gz"
+        r1_trimmed="outputs/trimmed/{sample}_extracted_trimmed_R1.fastq.gz",
+        index_loc="res/genome/genome"
     params:
-        genome=config["align"]["genome_dir"],
         prefix="outputs/aligned/{sample}."
     output: "outputs/aligned/{sample}.Aligned.sortedByCoord.out.bam"
     threads: config["align"]["threads"]
     shell:
         """
-        STAR --runThreadN {threads} --readFilesCommand zcat --genomeDir {params.genome} --readFilesIn {input.r1_trimmed} \
+        STAR --runThreadN {threads} --readFilesCommand zcat --genomeDir {input.index_loc} --readFilesIn {input.r1_trimmed} \
         --outFilterType BySJout --outFilterMultimapNmax 200 --alignSJoverhangMin 8 --alignSJDBoverhangMin 1 --outFilterMismatchNmax 999 \
         --outFilterMismatchNoverLmax 0.6 --alignIntronMin 20 --alignIntronMax 1000000 --alignMatesGapMax 1000000 --limitOutSJcollapsed 5000000 \
         --limitIObufferSize 500000 500000 --outSAMattributes NH HI NM MD --outSAMtype BAM SortedByCoordinate --outFileNamePrefix {params.prefix} \
