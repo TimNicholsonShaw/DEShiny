@@ -54,6 +54,39 @@ rule cutadapt:
         cutadapt --quiet -m 20 -O 20 -g "r1adapter=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC;min_overlap=20" --discard-trimmed -o {output.r1_trimmed} -
         """
 
+
+rule get_genome_and_annotation:
+    input: 
+        genome_fasta_location=config["align"]["genome_fasta_location"],
+        genome_annotation_location=config["align"]["genome_annotation_location"]
+    output:
+        genome_fasta="res/genome/genome_fasta.fastq.gz",
+        genome_annotation="res/genome/genome_annotation.gtf.gz"
+    threads: 1
+    shell:
+        """
+        mkdir res/genome
+        wget -O res/genome/genome_fasta.fastq.gz {input.genome_fasta_location}
+        wget -O res/genome/genome_annotation.gtf.gz {input.genome_annotation_location}
+        """
+
+rule make_star_index:
+    input:
+        genome_fasta="res/genome/genome_fasta.fastq.gz",
+        genome_annotation="res/genome/genome_annotation.gtf.gz"
+    output: 
+        "res/genome/genome",
+        "res/genome/Log.out"
+    threads: 10
+    params:
+        sjdb_overhang=config["align"]["sjdb_overhang"]
+    shell:
+        """
+        STAR --runMode genomeGenerate --runThreadN {threads} \
+        --genomeDir res/genome --genomeFastaFiles {input.genome_fasta} \
+        --sjdbGTFfile {input.genome_annotation} --sjdbOverhang {params.sjdb_overhang}
+        """
+
 rule align:
     input:
         r1_trimmed="outputs/trimmed/{sample}_extracted_trimmed_R1.fastq.gz"

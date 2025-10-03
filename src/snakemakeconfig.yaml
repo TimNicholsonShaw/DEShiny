@@ -5,4 +5,6 @@ demux:
 align:
   threads: 4
   genome_dir: res/genome
-  
+  genome_fasta_location: https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_49/GRCh38.primary_assembly.genome.fa.gz #url for downloading using wget
+  genome_annotation_location: https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_49/gencode.v49.basic.annotation.gtf.gz #url for downloading using wget
+  sjdb_overhang: 99
