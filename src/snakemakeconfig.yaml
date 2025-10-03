@@ -1,9 +1,10 @@
-sample_sheet: tests/sample-sheet.csv
+
 demux:
-  r1: tests/R1.fastq.gz
-  r2: tests/R2.fastq.gz
+  r1: https://github.com/TimNicholsonShaw/DEShiny/raw/refs/heads/main/tests/R1.fastq.gz
+  r2: https://github.com/TimNicholsonShaw/DEShiny/raw/refs/heads/main/tests/R2.fastq.gz
+  sample_sheet: https://github.com/TimNicholsonShaw/DEShiny/raw/refs/heads/main/tests/sample-sheet.csv
 align:
   threads: 4
-  genome_fasta_location: https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_49/GRCh38.primary_assembly.genome.fa.gz #url for downloading using wget
+  genome_fasta_location: https://github.com/TimNicholsonShaw/DEShiny/raw/refs/heads/main/tests/GRCh38_chr20.fa.gz #url for downloading using wget
   genome_annotation_location: https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_49/gencode.v49.basic.annotation.gtf.gz #url for downloading using wget
   sjdb_overhang: 99

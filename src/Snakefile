@@ -1,18 +1,31 @@
 import pandas as pd 
 import yaml
 
-sample_names = list(pd.read_csv(config["sample_sheet"])["sample_name"])
+sample_names = list(pd.read_csv("res/sample_sheet.csv")["sample_name"])
 print(sample_names)
 
 rule all:
     input:
         "outputs/gene_counts.tsv"
 
+rule get_fasta_files:
+    output: 
+        r1="res/r1.fastq.gz",
+        r2="res/r2.fastq.gz"
+    params:
+        r1_loc=config["demux"]["r1"],
+        r2_loc=config["demux"]["r2"]
+    shell:
+        """
+        wget -O res/r1.fastq.gz {params.r1_loc}
+        wget -O res/r2.fastq.gz {params.r2_loc}
+        """
+
 rule idemux:
     input:
-        r1=config["demux"]["r1"],
-        r2=config["demux"]["r2"],
-        sample_sheet=config["sample_sheet"]
+        r1="res/r1.fastq.gz",
+        r2="res/r2.fastq.gz",
+        sample_sheet="res/sample_sheet.csv"
     output:
         out_dir=directory("outputs/idemultiplexed/"),
         r1_fastq=expand("outputs/idemultiplexed/{sample}_R1.fastq.gz", sample=sample_names),
@@ -54,7 +67,6 @@ rule cutadapt:
         cutadapt --quiet -m 20 -O 20 -g "r1adapter=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC;min_overlap=20" --discard-trimmed -o {output.r1_trimmed} -
         """
 
-
 rule get_genome_and_annotation:
     output:
         genome_fasta="res/genome/genome_fasta.fastq",
@@ -77,7 +89,7 @@ rule make_star_index:
         genome_fasta="res/genome/genome_fasta.fastq",
         genome_annotation="res/genome/genome_annotation.gtf"
     output: 
-        "res/genome/genome",
+        "res/genome/Genome",
         "res/genome/Log.out"
     threads: 10
     params:
@@ -92,14 +104,15 @@ rule make_star_index:
 rule star_align:
     input:
         r1_trimmed="outputs/trimmed/{sample}_extracted_trimmed_R1.fastq.gz",
-        index_loc="res/genome/genome"
+        star_was_indexed="res/genome/Genome"
     params:
-        prefix="outputs/aligned/{sample}."
+        prefix="outputs/aligned/{sample}.",
+        index_loc="res/genome"
     output: "outputs/aligned/{sample}.Aligned.sortedByCoord.out.bam"
     threads: config["align"]["threads"]
     shell:
         """
-        STAR --runThreadN {threads} --readFilesCommand zcat --genomeDir {input.index_loc} --readFilesIn {input.r1_trimmed} \
+        STAR --runThreadN {threads} --readFilesCommand zcat --genomeDir {params.index_loc} --readFilesIn {input.r1_trimmed} \
         --outFilterType BySJout --outFilterMultimapNmax 200 --alignSJoverhangMin 8 --alignSJDBoverhangMin 1 --outFilterMismatchNmax 999 \
         --outFilterMismatchNoverLmax 0.6 --alignIntronMin 20 --alignIntronMax 1000000 --alignMatesGapMax 1000000 --limitOutSJcollapsed 5000000 \
         --limitIObufferSize 500000 500000 --outSAMattributes NH HI NM MD --outSAMtype BAM SortedByCoordinate --outFileNamePrefix {params.prefix} \
@@ -134,7 +147,7 @@ rule featureCounts:
     input: 
         alignments=expand("outputs/dedup/{sample}.dedup.bam", sample=sample_names)
     params:
-        annotation="res/genome/gencode.v49.basic.annotation.gtf"
+        annotation="res/genome/genome_annotation.gtf"
     output: "outputs/gene_counts.tsv"
     shell:
         """
