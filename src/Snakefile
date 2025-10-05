@@ -17,8 +17,10 @@ rule get_fasta_files:
         r2_loc=config["demux"]["r2"]
     shell:
         """
+        echo "bulk_step,get_data,running" >> logs/bulk_progress.log
         wget -O res/r1.fastq.gz {params.r1_loc}
         wget -O res/r2.fastq.gz {params.r2_loc}
+        echo "bulk_step,get_data,finished" >> logs/bulk_progress.log
         """
 
 rule idemux:
@@ -32,7 +34,9 @@ rule idemux:
         r2_fastq=expand("outputs/idemultiplexed/{sample}_R2.fastq.gz", sample=sample_names)
     shell:
         """
+        echo "bulk_step,demux,running" >> logs/bulk_progress.log
         idemux --r1 {input.r1} --r2 {input.r2} --sample-sheet {input.sample_sheet} --out {output.out_dir}
+        echo "bulk_step,demux,finished" >> logs/bulk_progress.log
         """
 
 rule extract_umi:
@@ -48,9 +52,11 @@ rule extract_umi:
         r1_extracted="outputs/extracted/{sample}_extracted_R1.fastq.gz"
     shell:
         """
+        echo "{wildcards.sample},extract,running" >> logs/progress.log
         umi_tools extract --extract-method={params.extract_method} --bc-pattern {params.bc_pattern} \
         --bc-pattern2 {params.bc_pattern2} -L {log} -S {output.r1_extracted} \
         -I {input.r1} --read2-in={input.r2} --read2-out=/dev/null
+        echo "{wildcards.sample},extract,finished" >> logs/progress.log
         """
 
 rule cutadapt:
@@ -61,10 +67,12 @@ rule cutadapt:
     threads: 4
     shell:
         """
+        echo "{wildcards.sample},trim,running" >> logs/progress.log
         cutadapt --quiet -m 20 -O 20 -a "polyA=A{{20}}" -a "QUALITY=G{{20}}" -n {threads} {input.r1_extracted} | \
         cutadapt --quiet -m 20 -O 3 --nextseq-trim=10 -a "r1adapter=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC;min_overlap=3;max_error_rate=0.100000" - | \
         cutadapt --quiet -m 20 -O 3 -a "r1polyA=A{{18}}" - | \
         cutadapt --quiet -m 20 -O 20 -g "r1adapter=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC;min_overlap=20" --discard-trimmed -o {output.r1_trimmed} -
+        echo "{wildcards.sample},trim,finished" >> logs/progress.log
         """
 
 rule get_genome_and_annotation:
@@ -96,9 +104,11 @@ rule make_star_index:
         sjdb_overhang=config["align"]["sjdb_overhang"]
     shell:
         """
+        echo "bulk_step,make_index,running" >> logs/bulk_progress.log
         STAR --runMode genomeGenerate --runThreadN {threads} \
         --genomeDir res/genome --genomeFastaFiles {input.genome_fasta} \
         --sjdbGTFfile {input.genome_annotation} --sjdbOverhang {params.sjdb_overhang}
+        echo "bulk_step,make_index,finished" >> logs/bulk_progress.log
         """
 
 rule star_align:
@@ -112,11 +122,13 @@ rule star_align:
     threads: config["align"]["threads"]
     shell:
         """
+        echo "{wildcards.sample},align,running" >> logs/progress.log
         STAR --runThreadN {threads} --readFilesCommand zcat --genomeDir {params.index_loc} --readFilesIn {input.r1_trimmed} \
         --outFilterType BySJout --outFilterMultimapNmax 200 --alignSJoverhangMin 8 --alignSJDBoverhangMin 1 --outFilterMismatchNmax 999 \
         --outFilterMismatchNoverLmax 0.6 --alignIntronMin 20 --alignIntronMax 1000000 --alignMatesGapMax 1000000 --limitOutSJcollapsed 5000000 \
         --limitIObufferSize 500000 500000 --outSAMattributes NH HI NM MD --outSAMtype BAM SortedByCoordinate --outFileNamePrefix {params.prefix} \
         --limitBAMsortRAM 5000000 --genomeLoad LoadAndKeep
+        echo "{wildcards.sample},align,finished" >> logs/progress.log
         """
 rule index:
     input: "outputs/aligned/{sample}.Aligned.sortedByCoord.out.bam"
@@ -133,8 +145,10 @@ rule dedup:
     output: "outputs/dedup/{sample}.dedup.bam"
     shell:
         """
+        echo "{wildcards.sample},dedup,running" >> logs/progress.log
         umi_tools dedup -I {input.alignment} -S {output} --multimapping-detection-method=NH \
         --output-stats=outputs/dedup/deduplicated.txt --log=outputs/dedup/deduplication.log
+        echo "{wildcards.sample},dedup,finished" >> logs/progress.log
             """
 rule index2:
     input: "outputs/dedup/{sample}.dedup.bam"
@@ -151,6 +165,8 @@ rule featureCounts:
     output: "outputs/gene_counts.tsv"
     shell:
         """
+        echo "bulk_step,feature_counts,running" >> logs/bulk_progress.log
         featureCounts -s 1 -T 4 -t exon -g gene_id -a {params.annotation} \
         -o {output} {input.alignments}
+        echo "bulk_step,feature_counts,finished" >> logs/bulk_progress.log
         """

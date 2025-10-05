@@ -41,9 +41,12 @@ COPY . .
 EXPOSE 8080
 
 #CMD ["tail", "-f", "/dev/null"]
-CMD wget -O src/snakemakeconfig.yaml $CONFIG \
-&& conda run --no-capture-output -n test-env shiny run src/app.py --host 0.0.0.0 --port 8080 \
-& conda run --no-capture-output -n test-env python src/get_sample_sheet.py \
+CMD touch logs/progress.log \
+&& touch logs/bulk_progress.log \
+&& wget -O src/snakemakeconfig.yaml $CONFIG \
+&& conda run --no-capture-output -n test-env python src/get_sample_sheet.py \
 && conda run --no-capture-output -n test-env snakemake --snakefile src/Snakefile \
 --configfile src/snakemakeconfig.yaml --cores 4 --keep-incomplete \
-& tail -f /dev/null
+& sleep 2 \
+&& conda run --no-capture-output -n test-env shiny run src/shiny/app.py --host 0.0.0.0 --port 8080 -r
+ 
