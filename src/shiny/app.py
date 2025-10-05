@@ -11,31 +11,21 @@ ui.page_opts(
 )
 
 ############################
-
+# read samples in from the sample sheet, downloaded by entry point of docker file
 samples = pd.read_csv("res/sample_sheet.csv")["sample_name"]
-steps = ["extract",
-         "trim",
-         "align",
-         "dedup"]
-emoji_dict = {
-    "not_started":" ",
+
+emoji_dict = { # emojis used to represent statuses in the progress tables
+"not_started":" ",
     "running":"🏃",
     "finished":"✅"
 }
 
-bulk_steps = ["get_data", "demux", "make_index", "feature_counts"]
-
+################# individual step progress monitoring ##################
+steps = ["extract", "trim", "align", "dedup"]
 progress_df = pd.DataFrame(emoji_dict["not_started"], index=samples, columns=steps)\
     .reset_index().set_index("sample_name", drop=False)
-
-bulk_progress_df = pd.DataFrame(emoji_dict["not_started"], index=["bulk_step"], columns=bulk_steps)
-###################################
 progress_log_loc = Path("logs/progress.log")
-bulk_progress_log_loc =Path("logs/bulk_progress.log")
-
-
 global_progress_file_position = 0
-
 
 @reactive.file_reader(progress_log_loc)
 def return_new_progress_log_lines(progress_log_loc=progress_log_loc):
@@ -55,8 +45,10 @@ def return_new_progress_log_lines(progress_log_loc=progress_log_loc):
         except:
             return buffer
     return buffer
-######################################
 
+################# bulk step progress monitoring #####################
+bulk_steps = ["get_data", "demux", "make_index", "feature_counts"]
+bulk_progress_df = pd.DataFrame(emoji_dict["not_started"], index=["bulk_step"], columns=bulk_steps)
 bulk_progress_log_loc =Path("logs/bulk_progress.log")
 global_bulk_progress_file_position = 0
 
@@ -79,8 +71,7 @@ def return_new_bulk_progress_log_lines(progress_log_loc=bulk_progress_log_loc):
             return buffer
     return buffer
 
-#######################
-
+################# UI ###################
 
 with ui.nav_panel("Pipeline Status"):
     with ui.card():
@@ -127,3 +118,5 @@ with ui.nav_panel("Pipeline Status"):
                     },
                 ]
                 )
+        
+
