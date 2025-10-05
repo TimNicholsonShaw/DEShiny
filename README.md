@@ -11,4 +11,4 @@
 
 ## Features
 - A dashboard for visualization of pipeline status
-![Caption for the picture.](res/tests/img/pipeline_status_example.png)
+![Pipeline Status](tests/img/pipeline_status_example.png)
