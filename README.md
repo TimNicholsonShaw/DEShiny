@@ -3,12 +3,11 @@
 
 ## Notes:
 - The docker image is available from timnicholsonshaw/deshiny
-- An example config file can be found in the tests folder
-- The config file location (retrieved by wget) should be passed to the container via the CONFIG environment variable
-- example: docker run -p 8080:8080 -e CONFIG=[config url] deshiny
-- FASTQ, genome fasta, and genome annotation are retrieved via wget from the urls noted in the config file
 - Shiny app will run on port 8080
+- Example sample sheet is available in the tests folder, default URLs should work for testing
 
 ## Features
+- A page for setting pipeline options with input validation coming soon
+![Pipeline Options](tests/img/file_input_example.png)
 - A dashboard for visualization of pipeline status
 ![Pipeline Status](tests/img/pipeline_status_example.png)

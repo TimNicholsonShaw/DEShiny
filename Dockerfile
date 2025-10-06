@@ -25,12 +25,19 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86
 # Put conda in path so we can use conda activate
 ENV PATH=$CONDA_DIR/bin:$PATH
 
+
+
 # install conda dependencies
 RUN --mount=type=cache,target=/root/.cache/conda \
     --mount=type=bind,source=environment.yaml,target=environment.yaml \
     conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main && \
     conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r && \
     conda env create -f environment.yaml
+
+# install pip dependencies
+RUN --mount=type=cache,target=/root/.cache/pip \
+    --mount=type=bind,source=requirements.txt,target=requirements.txt \
+    conda run --no-capture-output -n test-env pip install -r requirements.txt
 
 # Copy the source code into the container.
 COPY . .
@@ -41,12 +48,14 @@ COPY . .
 EXPOSE 8080
 
 #CMD ["tail", "-f", "/dev/null"]
-CMD touch logs/progress.log \
-&& touch logs/bulk_progress.log \
-&& wget -O src/snakemakeconfig.yaml $CONFIG \
-&& conda run --no-capture-output -n test-env python src/get_sample_sheet.py \
-&& conda run --no-capture-output -n test-env snakemake --snakefile src/Snakefile \
---configfile src/snakemakeconfig.yaml --cores 4 --keep-incomplete \
-& sleep 2 \
-&& conda run --no-capture-output -n test-env shiny run src/shiny/app.py --host 0.0.0.0 --port 8080 -r
- 
+# CMD touch logs/progress.log \
+# && touch logs/bulk_progress.log \
+# && wget -O src/snakemakeconfig.yaml $CONFIG \
+# && conda run --no-capture-output -n test-env python src/get_sample_sheet.py \
+# # && conda run --no-capture-output -n test-env snakemake --snakefile src/Snakefile \
+# # --configfile src/snakemakeconfig.yaml --cores 4 --keep-incomplete \
+# & sleep 2 \
+# && conda run --no-capture-output -n test-env shiny run src/shiny/app.py --host 0.0.0.0 --port 8080 -r
+
+# CMD ["conda", "run," "--no-capture-output", "-n", "test-env", "python", "src/entry_point.py"]
+CMD conda run --no-capture-output -n test-env python src/entry_point.py & tail -f /dev/null

@@ -1,7 +1,7 @@
 import pandas as pd 
 import yaml
 
-sample_names = list(pd.read_csv("res/sample_sheet.csv")["sample_name"])
+sample_names = list(pd.read_csv(config["demux"]["sample_sheet"])["sample_name"])
 print(sample_names)
 
 rule all:
@@ -27,9 +27,9 @@ rule idemux:
     input:
         r1="res/r1.fastq.gz",
         r2="res/r2.fastq.gz",
-        sample_sheet="res/sample_sheet.csv"
+        sample_sheet=config["demux"]["sample_sheet"]
     output:
-        out_dir=directory("outputs/idemultiplexed/"),
+        out_dir=directory("outputs/idemultiplexed"),
         r1_fastq=expand("outputs/idemultiplexed/{sample}_R1.fastq.gz", sample=sample_names),
         r2_fastq=expand("outputs/idemultiplexed/{sample}_R2.fastq.gz", sample=sample_names)
     shell:

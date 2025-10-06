@@ -207,6 +207,6 @@ marimo/_lsp/
 __marimo__/
 
 # tim specific stuff
-res/
 .DS_Store
 logs/
+res/

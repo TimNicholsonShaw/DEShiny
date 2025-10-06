@@ -1,18 +1,17 @@
 from shiny import render, reactive
 from shiny.express import input, ui
 import pandas as pd
-from shiny.ui import page_navbar
-from functools import partial
 from pathlib import Path
+from resource_entry import enter_resources, make_snakemake_config
+import subprocess
 
 
+################ full app options ################
 ui.page_opts(
-    title="Differential Expression Shiny" 
-)
+     title="Differential Expression Shiny" 
+ )
 
-############################
-# read samples in from the sample sheet, downloaded by entry point of docker file
-samples = pd.read_csv("res/sample_sheet.csv")["sample_name"]
+############## reference ##############
 
 emoji_dict = { # emojis used to represent statuses in the progress tables
 "not_started":" ",
@@ -20,12 +19,19 @@ emoji_dict = { # emojis used to represent statuses in the progress tables
     "finished":"✅"
 }
 
-################# individual step progress monitoring ##################
-steps = ["extract", "trim", "align", "dedup"]
-progress_df = pd.DataFrame(emoji_dict["not_started"], index=samples, columns=steps)\
-    .reset_index().set_index("sample_name", drop=False)
+sample_steps = ["extract", "trim", "align", "dedup"]
+
+bulk_steps = ["get_data", "demux", "make_index", "feature_counts"]
+
+################# reactive log monitoring ####################
 progress_log_loc = Path("logs/progress.log")
 global_progress_file_position = 0
+
+bulk_progress_log_loc =Path("logs/bulk_progress.log")
+global_bulk_progress_file_position = 0
+
+
+############# reactive values ####################
 
 @reactive.file_reader(progress_log_loc)
 def return_new_progress_log_lines(progress_log_loc=progress_log_loc):
@@ -46,12 +52,6 @@ def return_new_progress_log_lines(progress_log_loc=progress_log_loc):
             return buffer
     return buffer
 
-################# bulk step progress monitoring #####################
-bulk_steps = ["get_data", "demux", "make_index", "feature_counts"]
-bulk_progress_df = pd.DataFrame(emoji_dict["not_started"], index=["bulk_step"], columns=bulk_steps)
-bulk_progress_log_loc =Path("logs/bulk_progress.log")
-global_bulk_progress_file_position = 0
-
 @reactive.file_reader(bulk_progress_log_loc)
 def return_new_bulk_progress_log_lines(progress_log_loc=bulk_progress_log_loc):
     global global_bulk_progress_file_position
@@ -71,22 +71,115 @@ def return_new_bulk_progress_log_lines(progress_log_loc=bulk_progress_log_loc):
             return buffer
     return buffer
 
+individual_progress_df = reactive.value(pd.DataFrame())
+bulk_progress_df = reactive.value(pd.DataFrame())
+sample_sheet = reactive.value(pd.DataFrame())
+samples = reactive.value([])
+
+
 ################# UI ###################
+################# data entry ############
+with ui.nav_panel("Data Entry"):
+    enter_resources() 
+
+    @render.text
+    @reactive.calc
+    def set_sample_df() -> None:
+        if not input.sample_sheet():
+            return
+        
+        try:
+            sample_sheet_loc = input.sample_sheet()[0]["datapath"]
+            sample_sheet.set(pd.read_csv(sample_sheet_loc))
+
+        except IndexError:
+            return
+
+    @render.text
+    @reactive.calc
+    def set_sample_names() -> None:
+        if not input.sample_sheet():
+            return
+        try:
+            samples.set(
+                sample_sheet.get()["sample_name"].values
+            ) 
+        except IndexError:
+            return
+
+    ui.input_action_button(
+        "start_pipeline", 
+        "Start Pipeline"
+        )
+    
+    @render.text
+    @reactive.event(input.start_pipeline)
+    def run_snakemake(sample_steps=sample_steps, bulk_steps=bulk_steps):
+        if len(samples.get()) == 0:
+            return "Invalid sample sheet"
+        
+        individual_progress_df.set(
+            pd.DataFrame(
+                emoji_dict["not_started"],
+                index=samples.get(),
+                columns=sample_steps
+            ).reset_index().rename(columns={"index":"sample_name"})\
+            .set_index("sample_name", drop=False)
+        )
+
+        bulk_progress_df.set(
+            pd.DataFrame(
+                emoji_dict["not_started"],
+                index=["bulk_step"],
+                columns=bulk_steps
+            )
+        )
+
+        make_snakemake_config(
+            demux_r1_loc = input.r1_loc(),
+            demux_r2_loc = input.r2_loc(),
+            demux_sample_sheet = input.sample_sheet()[0]["datapath"],
+            align_genome = input.genome_fasta_loc(),
+            align_annotation = input.annotation_loc()
+        )
+
+        ui.update_action_button("start_pipeline", disabled=True)
+
+        # kick off pipeline
+        subprocess.Popen(["conda", "run", "--no-capture-output", "-n", "test-env",
+            "snakemake", "--snakefile", "src/Snakefile", "--configfile","res/snakemakeconfig.yaml",
+            "--cores", "all", "--keep-incomplete"])
+
+
+    with ui.card():
+        ui.card_header("Sample Sheet")
+        @render.data_frame
+        def blah():
+            return sample_sheet.get()
+        
+################## progress monitoring ##################
 
 with ui.nav_panel("Pipeline Status"):
     with ui.card():
         ui.card_header("Pipeline Sample Status")
+        
         @render.data_frame
+        @reactive.calc
         def render_progress_df():
+            if len(samples.get()) == 0:
+                return
+            
+            df = individual_progress_df.get()
+
             for line in return_new_progress_log_lines():
                 line = line.rstrip().split(",")
-                try:
-                    progress_df.loc[line[0], line[1]] = emoji_dict[line[2]]
-                except:
-                    continue
+                df.loc[line[0], line[1]] = emoji_dict[line[2]]
+
+                individual_progress_df.set(df)
+
 
             return render.DataTable(
-                progress_df,
+                individual_progress_df(),
                 styles=[
                     {
                         "class":"text-center"
@@ -98,17 +191,25 @@ with ui.nav_panel("Pipeline Status"):
                 )
     with ui.card():
         ui.card_header("Bulk Process Status")
+
+
+
         @render.data_frame
+        @reactive.calc
         def render_bulk_progress_df():
+            if len(samples()) == 0:
+                return
+            df = bulk_progress_df()
             for line in return_new_bulk_progress_log_lines():
                 line = line.rstrip().split(",")
-                try:
-                    bulk_progress_df.loc["bulk_step", line[1]] = emoji_dict[line[2]]
-                except:
-                    continue
+                df.loc["bulk_step", line[1]] = emoji_dict[line[2]]
+
+                bulk_progress_df.set(df)
+
+
 
             return render.DataTable(
-                bulk_progress_df,
+                bulk_progress_df(),
                 styles=[
                     {
                         "class":"text-center"
@@ -119,4 +220,8 @@ with ui.nav_panel("Pipeline Status"):
                 ]
                 )
         
+
+        
+
+
 
