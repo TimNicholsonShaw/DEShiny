@@ -1,10 +1,11 @@
-from shiny import render, reactive
+from shiny import render, reactive, req
+import shiny
 from shiny.express import input, ui
 import pandas as pd
 from pathlib import Path
 from resource_entry import enter_resources, make_snakemake_config
 import subprocess
-
+from shiny_validate import InputValidator, check
 
 ################ full app options ################
 ui.page_opts(
@@ -80,8 +81,28 @@ samples = reactive.value([])
 ################# UI ###################
 ################# data entry ############
 with ui.nav_panel("Data Entry"):
-    enter_resources() 
 
+    ########### validation #############
+    enter_resources() 
+    # Unfortunate workaround to get InputValidator to work in Express
+    input_validator = None
+
+    @reactive.effect
+    def _validator():
+        # Add validation rules for each input that requires validation
+        global input_validator
+        input_validator = InputValidator()
+        input_validator.add_rule("r1_loc", check.required())
+        input_validator.add_rule("r1_loc", check.url())
+        input_validator.add_rule("r2_loc", check.required())
+        input_validator.add_rule("r2_loc", check.url())
+        input_validator.add_rule("sample_sheet", check.required())
+        input_validator.add_rule("genome_fasta_loc", check.required())
+        input_validator.add_rule("genome_fasta_loc", check.url())        
+        input_validator.add_rule("annotation_loc", check.required())
+        input_validator.add_rule("annotation_loc", check.url())
+    
+    ###################################
     @render.text
     @reactive.calc
     def set_sample_df() -> None:
@@ -106,15 +127,25 @@ with ui.nav_panel("Data Entry"):
             ) 
         except IndexError:
             return
-
-    ui.input_action_button(
-        "start_pipeline", 
-        "Start Pipeline"
+    
+    with ui.layout_columns():
+        ui.input_action_button(
+            "start_pipeline", 
+            "Start Pipeline", 
+            width=1
+            )
+        ui.input_action_button(
+            "shutdown_container",
+            "Shutdown Container",
+            width=1
         )
+        ui.div(width=10)
     
     @render.text
     @reactive.event(input.start_pipeline)
     def run_snakemake(sample_steps=sample_steps, bulk_steps=bulk_steps):
+        input_validator.enable()
+        req(input_validator.is_valid())
         if len(samples.get()) == 0:
             return "Invalid sample sheet"
         
@@ -149,6 +180,12 @@ with ui.nav_panel("Data Entry"):
         subprocess.Popen(["conda", "run", "--no-capture-output", "-n", "test-env",
             "snakemake", "--snakefile", "src/Snakefile", "--configfile","res/snakemakeconfig.yaml",
             "--cores", "all", "--keep-incomplete"])
+        
+    @render.text
+    @reactive.event(input.shutdown_container)
+    def click_shutdown_container():
+        cmd = "ps -afx | grep tail | awk '{print $1}' | xargs kill -9"
+        subprocess.run(cmd, shell=True)
 
 
     with ui.card():
@@ -220,8 +257,10 @@ with ui.nav_panel("Pipeline Status"):
                 ]
                 )
         
-
+with ui.nav_panel("Demux Stats"):
+    pass
         
 
+############### validation #################
 
 

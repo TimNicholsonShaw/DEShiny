@@ -15,7 +15,9 @@ WORKDIR /app
 # add wget to image
 RUN  apt-get update \
   && apt-get install -y wget \
+  && apt-get install -y procps \
   && rm -rf /var/lib/apt/lists/*
+  
 
 # install conda
 ENV CONDA_DIR=/opt/conda
