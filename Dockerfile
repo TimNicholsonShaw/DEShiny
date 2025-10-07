@@ -59,5 +59,5 @@ EXPOSE 8080
 # & sleep 2 \
 # && conda run --no-capture-output -n test-env shiny run src/shiny/app.py --host 0.0.0.0 --port 8080 -r
 
-# CMD ["conda", "run," "--no-capture-output", "-n", "test-env", "python", "src/entry_point.py"]
-CMD conda run --no-capture-output -n test-env python src/entry_point.py & tail -f /dev/null
+# CMD ["conda", "run," "--no-capture-output", "-n", "test-env", "python", "src/scripts/entry_point.py"]
+CMD conda run --no-capture-output -n test-env python src/scripts/entry_point.py & tail -f /dev/null

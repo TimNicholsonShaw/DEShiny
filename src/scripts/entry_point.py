@@ -7,8 +7,11 @@ if __name__=="__main__":
     # create empty log files so shiny doesn't complain that they don't exist
     os.makedirs("logs/", exist_ok=True) 
     os.makedirs("res/", exist_ok=True) 
+    os.makedirs("outputs/aligned/", exist_ok=True)
     open("logs/progress.log", "w").close()
     open("logs/bulk_progress.log", "w").close()
+    open("outputs/aligned/align_summary.csv", "w").close()
+
 
     # run shiny app
     subprocess.Popen(
@@ -28,3 +31,5 @@ if __name__=="__main__":
             "-r"
         ]
     )
+
+    

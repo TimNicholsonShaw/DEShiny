@@ -6,7 +6,8 @@ print(sample_names)
 
 rule all:
     input:
-        "outputs/gene_counts.tsv"
+        "outputs/gene_counts.tsv",
+        "outputs/aligned/align_summary.csv"
 
 rule get_fasta_files:
     output: 
@@ -118,7 +119,9 @@ rule star_align:
     params:
         prefix="outputs/aligned/{sample}.",
         index_loc="res/genome"
-    output: "outputs/aligned/{sample}.Aligned.sortedByCoord.out.bam"
+    log: "outputs/aligned/{sample}.Log.final.out"
+    output: 
+        "outputs/aligned/{sample}.Aligned.sortedByCoord.out.bam",
     threads: config["align"]["threads"]
     shell:
         """
@@ -127,9 +130,21 @@ rule star_align:
         --outFilterType BySJout --outFilterMultimapNmax 200 --alignSJoverhangMin 8 --alignSJDBoverhangMin 1 --outFilterMismatchNmax 999 \
         --outFilterMismatchNoverLmax 0.6 --alignIntronMin 20 --alignIntronMax 1000000 --alignMatesGapMax 1000000 --limitOutSJcollapsed 5000000 \
         --limitIObufferSize 500000 500000 --outSAMattributes NH HI NM MD --outSAMtype BAM SortedByCoordinate --outFileNamePrefix {params.prefix} \
-        --limitBAMsortRAM 5000000 --genomeLoad LoadAndKeep
+        --limitBAMsortRAM 500000 --genomeLoad LoadAndKeep
         echo "{wildcards.sample},align,finished" >> logs/progress.log
         """
+
+rule align_log_summary:
+    input: expand("outputs/aligned/{sample}.Log.final.out", sample=sample_names)
+    output: "outputs/aligned/align_summary.csv"
+    params: str_samples=" ".join(sample_names)
+    shell: 
+        """
+        python src/scripts/parse_logs.py {params.str_samples}
+        """
+
+
+
 rule index:
     input: "outputs/aligned/{sample}.Aligned.sortedByCoord.out.bam"
     output: "outputs/aligned/{sample}.Aligned.sortedByCoord.out.bam.bai"

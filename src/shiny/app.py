@@ -148,7 +148,7 @@ with ui.nav_panel("Data Entry"):
     def run_snakemake(sample_steps=sample_steps, bulk_steps=bulk_steps):
         input_validator.enable()
         req(input_validator.is_valid())
-        if len(samples.get()) == 0:
+        if len(samples()) == 0:
             return "Invalid sample sheet"
         
         individual_progress_df.set(
@@ -289,28 +289,27 @@ with ui.nav_panel("Demux Stats"):
             return
 
 
-    # @render.data_frame
-    # @reactive.file_reader(demux_path)
-    # def render_demux_stats_table():
-    #     try:
-    #         df = pd.read_csv(demux_path, delimiter="\t")
-    #         sample_order = list(samples()) +["undetermined"]
+with ui.nav_panel("Align Stats"):
+    align_summary_path = Path("outputs/aligned/align_summary.csv")
+    
+    @reactive.calc
+    @reactive.file_reader(align_summary_path)
+    def get_align_df():
+        df = pd.read_csv(align_summary_path)
+        return df
 
-    #         df = df.set_index("sample_name", drop=False).reindex(sample_order)
-            
-    #         return df
-    #     except:
-    #         return
         
-    # @render_widget
-    # @reactive.file_reader(demux_path)
-    # def render_demux_bar():
-    #     try:
-    #         df = pd.read_csv(demux_path, delimiter="\t")
+    @render.data_frame
+    def render_align_df():
+        return get_align_df()
+    
+    @render_widget
+    def render_unique_map_percent():
+        df = get_align_df()
+        df["Uniquely mapped reads %"] = df["Uniquely mapped reads %"].str.rstrip("%").astype('float')
+        return px.bar(get_align_df(), x="sample_name", y="Uniquely mapped reads %")
 
-    #         return px.bar(df, x="sample_name", y="written_reads")
-    #     except:
-    #         return
+
     
 
 
