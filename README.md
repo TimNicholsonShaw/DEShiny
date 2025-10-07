@@ -7,7 +7,7 @@
 - Example sample sheet is available in the tests folder, default URLs should work for testing
 
 ## Features
-- A page for setting pipeline options with input validation coming soon
+- A page for setting pipeline options with input validation
 ![Pipeline Options](tests/img/file_input_example.png)
 - A dashboard for visualization of pipeline status
 ![Pipeline Status](tests/img/pipeline_status_example.png)
