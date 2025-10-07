@@ -13,3 +13,6 @@ dependencies:
   - cutadapt=5.1
   - subread=2.1.1
   - shiny=1.4.0
+  - shinywidgets=0.7.0
+  - plotly_express=0.4.1
+  - anywidget=0.9.18

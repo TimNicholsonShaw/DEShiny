@@ -11,3 +11,5 @@
 ![Pipeline Options](tests/img/file_input_example.png)
 - A dashboard for visualization of pipeline status
 ![Pipeline Status](tests/img/pipeline_status_example.png)
+- Visualization of demultiplexed counts
+![Demux Stats](tests/img/demux_stats_example.png)

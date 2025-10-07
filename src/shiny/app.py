@@ -1,11 +1,13 @@
 from shiny import render, reactive, req
-import shiny
 from shiny.express import input, ui
 import pandas as pd
 from pathlib import Path
 from resource_entry import enter_resources, make_snakemake_config
-import subprocess
+import subprocess, os
 from shiny_validate import InputValidator, check
+import plotly.express as px
+from shinywidgets import render_widget 
+
 
 ################ full app options ################
 ui.page_opts(
@@ -128,7 +130,7 @@ with ui.nav_panel("Data Entry"):
         except IndexError:
             return
     
-    with ui.layout_columns():
+    with ui.layout_columns(col_widths=(3,3,6)):
         ui.input_action_button(
             "start_pipeline", 
             "Start Pipeline", 
@@ -195,7 +197,6 @@ with ui.nav_panel("Data Entry"):
             return sample_sheet.get()
         
 ################## progress monitoring ##################
-
 with ui.nav_panel("Pipeline Status"):
     with ui.card():
         ui.card_header("Pipeline Sample Status")
@@ -257,10 +258,61 @@ with ui.nav_panel("Pipeline Status"):
                 ]
                 )
         
+############## demux stats ##################
 with ui.nav_panel("Demux Stats"):
-    pass
-        
+    demux_path = Path("outputs/idemultiplexed/demultipexing_stats.tsv")
+    demux_path.parents[0].mkdir(parents=True, exist_ok=True)
+    demux_path.touch()
 
-############### validation #################
+
+    @reactive.calc
+    @reactive.file_reader(demux_path)
+    def get_demux_df():
+        try:
+            df = pd.read_csv(demux_path, delimiter="\t")
+            sample_order = list(samples()) +["undetermined"]
+            df = df.set_index("sample_name", drop=False).reindex(sample_order)
+
+            return df
+        except:
+            return
+    
+    @render.data_frame
+    def render_demux_stats():
+        return get_demux_df()
+    
+    @render_widget
+    def render_demux_bar():
+        try:
+            return px.bar(get_demux_df(), x="sample_name", y="written_reads")
+        except:
+            return
+
+
+    # @render.data_frame
+    # @reactive.file_reader(demux_path)
+    # def render_demux_stats_table():
+    #     try:
+    #         df = pd.read_csv(demux_path, delimiter="\t")
+    #         sample_order = list(samples()) +["undetermined"]
+
+    #         df = df.set_index("sample_name", drop=False).reindex(sample_order)
+            
+    #         return df
+    #     except:
+    #         return
+        
+    # @render_widget
+    # @reactive.file_reader(demux_path)
+    # def render_demux_bar():
+    #     try:
+    #         df = pd.read_csv(demux_path, delimiter="\t")
+
+    #         return px.bar(df, x="sample_name", y="written_reads")
+    #     except:
+    #         return
+    
+
+
 
 
