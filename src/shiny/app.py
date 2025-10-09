@@ -199,35 +199,6 @@ with ui.nav_panel("Data Entry"):
 ################## progress monitoring ##################
 with ui.nav_panel("Pipeline Status"):
     with ui.card():
-        ui.card_header("Pipeline Sample Status")
-        
-        @render.data_frame
-        @reactive.calc
-        def render_progress_df():
-            if len(samples.get()) == 0:
-                return
-            
-            df = individual_progress_df.get()
-
-            for line in return_new_progress_log_lines():
-                line = line.rstrip().split(",")
-                df.loc[line[0], line[1]] = emoji_dict[line[2]]
-
-                individual_progress_df.set(df)
-
-
-            return render.DataTable(
-                individual_progress_df(),
-                styles=[
-                    {
-                        "class":"text-center"
-                    },
-                    {
-                        "names":True
-                    },
-                ]
-                )
-    with ui.card():
         ui.card_header("Bulk Process Status")
 
 
@@ -248,6 +219,36 @@ with ui.nav_panel("Pipeline Status"):
 
             return render.DataTable(
                 bulk_progress_df(),
+                styles=[
+                    {
+                        "class":"text-center"
+                    },
+                    {
+                        "names":True
+                    },
+                ]
+                )
+        
+    with ui.card():
+        ui.card_header("Pipeline Sample Status")
+        
+        @render.data_frame
+        @reactive.calc
+        def render_progress_df():
+            if len(samples.get()) == 0:
+                return
+            
+            df = individual_progress_df.get()
+
+            for line in return_new_progress_log_lines():
+                line = line.rstrip().split(",")
+                df.loc[line[0], line[1]] = emoji_dict[line[2]]
+
+                individual_progress_df.set(df)
+
+
+            return render.DataTable(
+                individual_progress_df(),
                 styles=[
                     {
                         "class":"text-center"
@@ -288,29 +289,124 @@ with ui.nav_panel("Demux Stats"):
         except:
             return
 
-
+############## alignment stats ##############
 with ui.nav_panel("Align Stats"):
     align_summary_path = Path("outputs/aligned/align_summary.csv")
     
     @reactive.calc
     @reactive.file_reader(align_summary_path)
     def get_align_df():
-        df = pd.read_csv(align_summary_path)
-        return df
+        try:
+            df = pd.read_csv(align_summary_path)
+            return df
+        except:
+            return
 
         
     @render.data_frame
     def render_align_df():
-        return get_align_df()
+        try:
+            return get_align_df()
+        except:
+            return
     
     @render_widget
     def render_unique_map_percent():
-        df = get_align_df()
-        df["Uniquely mapped reads %"] = df["Uniquely mapped reads %"].str.rstrip("%").astype('float')
-        return px.bar(get_align_df(), x="sample_name", y="Uniquely mapped reads %")
+        try:
+            df = get_align_df()
+            df["Uniquely mapped reads %"] = df["Uniquely mapped reads %"].str.rstrip("%").astype('float')
+            return px.bar(get_align_df(), x="sample_name", y="Uniquely mapped reads %")
+        except:
+            return
+
+################# dedup stats #################
+with ui.nav_panel("Dedup Stats"):
+    dedup_summary_path = Path("outputs/dedup/dedup_summary.csv")
+
+    @reactive.calc
+    @reactive.file_reader(dedup_summary_path)
+    def get_dedup_df():
+        try:
+            df = pd.read_csv(dedup_summary_path)
+            return df
+        except:
+            return
+
+    
+    @render.data_frame
+    def render_dedup_df():
+        try:
+            return get_dedup_df()
+        except:
+            return
+
+################## tpm ####################
+with ui.nav_panel("TPM"):
+    gene_counts_path = Path("outputs/gene_counts.tsv")
+    gene_counts_summary_path = Path("outputs/gene_counts.tsv.summary")
+
+
+    ui.input_selectize("sample_selectize", "Select Sample(s)", choices=["blorp", "blah"], multiple=True)
+
+    @reactive.effect
+    def update_selectize():
+        ui.update_selectize("sample_selectize", choices=list(samples()))
+
+
+    @reactive.calc
+    @reactive.file_reader(gene_counts_path)
+    def get_gene_counts():
+        try:
+            df = pd.read_csv(gene_counts_path, comment="#", delimiter="\t")
+            df = df.drop(columns=["Start", "End", "Strand", "Length", "Chr"])
+            print(df.columns)
+            print(["Geneid"]+list(samples()))
+            df.columns = ["Geneid"] + list(samples())
+
+            for sample in samples():
+                df[sample] = df[sample]/df[sample].sum()*1000000
+
+            return df
+        except:
+            print("problems reading gene counts")
+            return pd.DataFrame()
+    
+    @reactive.calc
+    @reactive.file_reader(gene_counts_summary_path)
+    def get_gene_counts_summary():
+        try:
+            df = pd.read_csv(gene_counts_summary_path, comment="#", delimiter="\t")
+            df.columns = ["Status"] + list(samples())
+            return df
+        except:
+            return
+    
+    @render.data_frame
+    def render_gene_counts_summary():
+        try:
+            return get_gene_counts_summary()
+        except:
+            return
+        
+    @render.data_frame
+    def render_gene_counts():
+
+        df = get_gene_counts()
+        if df.empty: return df
+
+        df = df.sort_values(by=df.columns[1], ascending=False)
+        if len(input.sample_selectize()) == 0: return df
+
+        selected = [df.columns[0]] + list(input.sample_selectize())
+
+
+        return df[selected]
+
+
 
 
     
+
 
 
 

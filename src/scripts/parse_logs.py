@@ -2,10 +2,11 @@ from datetime import datetime
 from sys import argv
 import pandas as pd
 
-data_folder = "outputs/aligned/"
+alignment_data_folder = "outputs/aligned/"
+dedup_data_folder = "outputs/dedup/"
 
 def parse_star_log(sample_name:str, 
-                   data_folder=data_folder, 
+                   data_folder=alignment_data_folder, 
                    file_extension=".Log.final.out") -> dict:
     out_dict={}
     datetime_fmt = "%b %d %H:%M:%S"
@@ -23,10 +24,38 @@ def parse_star_log(sample_name:str,
 
     return out_dict
 
-if __name__=="__main__":
+def parse_dedup_log(sample_name:str,
+                    data_folder=dedup_data_folder,
+                    file_extension="_dedup.log") -> dict:
+    
     out = {}
-    for log in argv[1:]:
-        out[log.replace(".Log.final.out", "")] = parse_star_log(log)
-    df = pd.DataFrame(out).transpose().reset_index(names=["sample_name"])
-    df.to_csv(f'{data_folder}align_summary.csv', index=False)
+    
+    with open(f'{data_folder}{sample_name}{file_extension}', "r") as log:
+        for line in log:
+            if line.startswith("#"): continue
+            line=line.strip().split("INFO")[-1]
+            line = line.split(":")
+            if len(line) == 1:
+                line=line[0].split(" ")
+            if line[0] == " command": continue
+            out[line[-2].lstrip()] = line[-1]
+    
+    return out
 
+if __name__=="__main__":
+    if len(argv) == 1:
+        print(parse_dedup_log("sample_001"))
+
+    elif argv[1] == "align":
+        out = {}
+        for log in argv[2:]:
+            out[log] = parse_star_log(log)
+        df = pd.DataFrame(out).transpose().reset_index(names=["sample_name"])
+        df.to_csv(f'{alignment_data_folder}align_summary.csv', index=False)
+    
+    elif argv[1] == "dedup":
+        out = {}
+        for log in argv[2:]:
+            out[log] = parse_dedup_log(log)
+        df = pd.DataFrame(out).transpose().reset_index(names="sample_name")
+        df.to_csv(f'{dedup_data_folder}dedup_summary.csv', index=False)

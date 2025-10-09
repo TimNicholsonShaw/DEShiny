@@ -16,7 +16,7 @@ def make_snakemake_config(output:str="res/snakemakeconfig.yaml",
 
     # set alignment options
     config['align'] = {
-        "threads":kwargs.get("align_threads", 4), 
+        "threads":kwargs.get("align_threads", 12), 
         "genome_fasta_location":kwargs["align_genome"], # required
         "genome_annotation_location":kwargs["align_annotation"], # required
         "sjdb_overhang":kwargs.get("align_sjdb_overhang", 99)
