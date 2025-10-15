@@ -113,6 +113,8 @@ rule make_star_index:
         echo "bulk_step,make_index,finished" >> logs/bulk_progress.log
         """
 
+# TODO Add a separate step to load the genome
+# FIXME limitIObuffersize, limitBAMsortRAM, and genomeLoad options need to be futzed with
 rule star_align:
     input:
         r1_trimmed="outputs/trimmed/{sample}_extracted_trimmed_R1.fastq.gz",

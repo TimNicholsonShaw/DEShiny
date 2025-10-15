@@ -9,6 +9,7 @@ import plotly.express as px
 from shinywidgets import render_widget 
 from yaml import safe_load
 
+# TODO Split app.py UI into multiple files
 
 ################ full app options ################
 ui.page_opts(
@@ -183,6 +184,8 @@ with ui.nav_panel("Data Entry"):
         cmd = "ps -afx | grep tail | awk '{print $1}' | xargs kill -9"
         subprocess.run(cmd, shell=True)
 
+    # TODO add a button and code to stop and re-run the pipeline
+
 
     with ui.card():
         ui.card_header("Sample Sheet")
@@ -339,7 +342,7 @@ with ui.nav_panel("TPM"):
     gene_counts_path = Path("outputs/gene_counts.tsv")
     gene_counts_summary_path = Path("outputs/gene_counts.tsv.summary")
 
-
+    # TODO TPM sample selectizer into sidebar
     ui.input_selectize("sample_selectize", "Select Sample(s)", choices=["blorp", "blah"], multiple=True)
 
     @reactive.effect
@@ -392,6 +395,8 @@ with ui.nav_panel("TPM"):
 
 
         return df[selected]
+    
+    # TODO add simple TPM graph
 
 
 
