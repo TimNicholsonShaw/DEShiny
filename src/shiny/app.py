@@ -7,6 +7,7 @@ import subprocess, os
 from shiny_validate import InputValidator, check
 import plotly.express as px
 from shinywidgets import render_widget 
+from yaml import safe_load
 
 
 ################ full app options ################
@@ -15,15 +16,12 @@ ui.page_opts(
  )
 
 ############## reference ##############
-
 emoji_dict = { # emojis used to represent statuses in the progress tables
 "not_started":" ",
     "running":"🏃",
     "finished":"✅"
 }
-
 sample_steps = ["extract", "trim", "align", "dedup"]
-
 bulk_steps = ["get_data", "demux", "make_index", "feature_counts"]
 
 ################# reactive log monitoring ####################
@@ -32,7 +30,6 @@ global_progress_file_position = 0
 
 bulk_progress_log_loc =Path("logs/bulk_progress.log")
 global_bulk_progress_file_position = 0
-
 
 ############# reactive values ####################
 
@@ -79,14 +76,11 @@ bulk_progress_df = reactive.value(pd.DataFrame())
 sample_sheet = reactive.value(pd.DataFrame())
 samples = reactive.value([])
 
-
-################# UI ###################
 ################# data entry ############
 with ui.nav_panel("Data Entry"):
 
     ########### validation #############
     enter_resources() 
-    # Unfortunate workaround to get InputValidator to work in Express
     input_validator = None
 
     @reactive.effect
@@ -359,8 +353,6 @@ with ui.nav_panel("TPM"):
         try:
             df = pd.read_csv(gene_counts_path, comment="#", delimiter="\t")
             df = df.drop(columns=["Start", "End", "Strand", "Length", "Chr"])
-            print(df.columns)
-            print(["Geneid"]+list(samples()))
             df.columns = ["Geneid"] + list(samples())
 
             for sample in samples():
@@ -368,7 +360,6 @@ with ui.nav_panel("TPM"):
 
             return df
         except:
-            print("problems reading gene counts")
             return pd.DataFrame()
     
     @reactive.calc
@@ -405,7 +396,7 @@ with ui.nav_panel("TPM"):
 
 
 
-    
+
 
 
 
