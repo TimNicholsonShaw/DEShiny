@@ -10,6 +10,7 @@ from shinywidgets import render_widget
 from yaml import safe_load
 
 # TODO Split app.py UI into multiple files
+# TODO password protect shiny app
 
 ################ full app options ################
 ui.page_opts(

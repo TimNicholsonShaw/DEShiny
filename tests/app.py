@@ -1,13 +1,15 @@
-from shiny.express import input, ui, render
-from yaml import safe_load
+from shiny import App, reactive, render, ui
 
+app_ui = ui.page_fluid(
+    ui.input_action_button("action_button", "Action"),
+    ui.output_text("counter")
+)
 
-with open(".secrets.yaml", "r") as file:
-    secret_password = safe_load(file)["password"]
-ui.input_password("password", "Password:")
+def server(input, output, session):
+    @render.text()
+    @reactive.event(input.action_button)
+    def counter():
+        return f"{input.action_button()}"
+    
 
-def check_auth():
-    return input.password() == secret_password
-@render.text
-def test():
-    return check_auth()
+app = App(app_ui, server)
