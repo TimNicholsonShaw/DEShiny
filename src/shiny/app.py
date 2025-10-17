@@ -9,6 +9,9 @@ import plotly.express as px
 from shinywidgets import render_widget 
 from yaml import safe_load
 
+
+
+
 # TODO Split app.py UI into multiple files
 # TODO password protect shiny app
 
@@ -104,6 +107,11 @@ with ui.nav_panel("Data Entry"):
     @render.text
     @reactive.calc
     def set_sample_df() -> None:
+        if os.environ.get("TEST", False):
+            sample_sheet_loc = "tests/sample-sheet.csv"
+            sample_sheet.set(pd.read_csv(sample_sheet_loc))
+            return
+        
         if not input.sample_sheet():
             return
         
@@ -117,7 +125,9 @@ with ui.nav_panel("Data Entry"):
     @render.text
     @reactive.calc
     def set_sample_names() -> None:
-        if not input.sample_sheet():
+        if os.environ.get("TEST", False):
+            pass
+        elif not input.sample_sheet():
             return
         try:
             samples.set(
