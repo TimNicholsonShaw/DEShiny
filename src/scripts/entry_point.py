@@ -37,7 +37,7 @@ if __name__=="__main__":
             "test-env",
             "shiny",
             "run",
-            "src/shiny/app.py",
+            "src/shiny/shiny2/app.py", # FIXME temporary location for app.py
             "--host",
             "0.0.0.0",
             "--port",
