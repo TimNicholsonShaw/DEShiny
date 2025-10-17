@@ -1,0 +1,15 @@
+Status	outputs/dedup/sample_001.dedup.bam	outputs/dedup/sample_002.dedup.bam	outputs/dedup/sample_003.dedup.bam	outputs/dedup/sample_004.dedup.bam	outputs/dedup/sample_005.dedup.bam	outputs/dedup/sample_006.dedup.bam	outputs/dedup/sample_007.dedup.bam	outputs/dedup/sample_008.dedup.bam
+Assigned	359	376	434	382	399	472	376	266
+Unassigned_Unmapped	0	0	0	0	0	0	0	0
+Unassigned_Read_Type	0	0	0	0	0	0	0	0
+Unassigned_Singleton	0	0	0	0	0	0	0	0
+Unassigned_MappingQuality	0	0	0	0	0	0	0	0
+Unassigned_Chimera	0	0	0	0	0	0	0	0
+Unassigned_FragmentLength	0	0	0	0	0	0	0	0
+Unassigned_Duplicate	0	0	0	0	0	0	0	0
+Unassigned_MultiMapping	2676	2645	5466	4115	3501	5156	3597	1764
+Unassigned_Secondary	0	0	0	0	0	0	0	0
+Unassigned_NonSplit	0	0	0	0	0	0	0	0
+Unassigned_NoFeatures	436	437	698	543	427	656	442	273
+Unassigned_Overlapping_Length	0	0	0	0	0	0	0	0
+Unassigned_Ambiguity	16	22	8	29	17	27	20	17

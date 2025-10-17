@@ -1,0 +1,9 @@
+sample_name,total_umis,#umis,Input Reads,Number of reads out,Total number of positions deduplicated,Mean number of unique UMIs per position,Max. number of unique UMIs per position
+sample_001,3493,1267, 3493, 3487, 3451, 1.01, 3
+sample_002,3482,1283, 3482, 3480, 3437, 1.01, 3
+sample_003,6632,1949, 6632, 6606, 6566, 1.01, 4
+sample_004,5079,1570, 5079, 5069, 5016, 1.01, 4
+sample_005,4352,1402, 4352, 4344, 4303, 1.01, 3
+sample_006,6314,1987, 6314, 6311, 6248, 1.01, 4
+sample_007,4439,1344, 4439, 4435, 4388, 1.01, 4
+sample_008,2320,870, 2320, 2320, 2293, 1.01, 6
