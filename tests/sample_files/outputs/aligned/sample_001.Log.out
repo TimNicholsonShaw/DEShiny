@@ -1,0 +1,226 @@
+STAR version=2.7.11b
+STAR compilation time,server,dir=2025-07-24T03:06:21+0000 :/opt/conda/conda-bld/star_1753326220084/work/source
+##### Command Line:
+/opt/conda/envs/test-env/bin/STAR-avx2 --runThreadN 8 --readFilesCommand zcat --genomeDir res/genome --readFilesIn outputs/trimmed/sample_001_extracted_trimmed_R1.fastq.gz --outFilterType BySJout --outFilterMultimapNmax 200 --alignSJoverhangMin 8 --alignSJDBoverhangMin 1 --outFilterMismatchNmax 999 --outFilterMismatchNoverLmax 0.6 --alignIntronMin 20 --alignIntronMax 1000000 --alignMatesGapMax 1000000 --limitOutSJcollapsed 5000000 --limitIObufferSize 500000 500000 --outSAMattributes NH HI NM MD --outSAMtype BAM SortedByCoordinate --outFileNamePrefix outputs/aligned/sample_001. --limitBAMsortRAM 500000 --genomeLoad NoSharedMemory
+##### Initial USER parameters from Command Line:
+outFileNamePrefix                 outputs/aligned/sample_001.
+###### All USER parameters from Command Line:
+runThreadN                    8     ~RE-DEFINED
+readFilesCommand              zcat        ~RE-DEFINED
+genomeDir                     res/genome     ~RE-DEFINED
+readFilesIn                   outputs/trimmed/sample_001_extracted_trimmed_R1.fastq.gz        ~RE-DEFINED
+outFilterType                 BySJout     ~RE-DEFINED
+outFilterMultimapNmax         200     ~RE-DEFINED
+alignSJoverhangMin            8     ~RE-DEFINED
+alignSJDBoverhangMin          1     ~RE-DEFINED
+outFilterMismatchNmax         999     ~RE-DEFINED
+outFilterMismatchNoverLmax    0.6     ~RE-DEFINED
+alignIntronMin                20     ~RE-DEFINED
+alignIntronMax                1000000     ~RE-DEFINED
+alignMatesGapMax              1000000     ~RE-DEFINED
+limitOutSJcollapsed           5000000     ~RE-DEFINED
+limitIObufferSize             500000   500000        ~RE-DEFINED
+outSAMattributes              NH   HI   NM   MD        ~RE-DEFINED
+outSAMtype                    BAM   SortedByCoordinate        ~RE-DEFINED
+outFileNamePrefix             outputs/aligned/sample_001.     ~RE-DEFINED
+limitBAMsortRAM               500000     ~RE-DEFINED
+genomeLoad                    NoSharedMemory     ~RE-DEFINED
+##### Finished reading parameters from all sources
+
+##### Final user re-defined parameters-----------------:
+runThreadN                        8
+genomeDir                         res/genome
+genomeLoad                        NoSharedMemory
+readFilesIn                       outputs/trimmed/sample_001_extracted_trimmed_R1.fastq.gz   
+readFilesCommand                  zcat   
+limitIObufferSize                 500000   500000   
+limitOutSJcollapsed               5000000
+limitBAMsortRAM                   500000
+outFileNamePrefix                 outputs/aligned/sample_001.
+outSAMtype                        BAM   SortedByCoordinate   
+outSAMattributes                  NH   HI   NM   MD   
+outFilterType                     BySJout
+outFilterMultimapNmax             200
+outFilterMismatchNmax             999
+outFilterMismatchNoverLmax        0.6
+alignIntronMin                    20
+alignIntronMax                    1000000
+alignMatesGapMax                  1000000
+alignSJoverhangMin                8
+alignSJDBoverhangMin              1
+
+-------------------------------
+##### Final effective command line:
+/opt/conda/envs/test-env/bin/STAR-avx2   --runThreadN 8   --genomeDir res/genome   --genomeLoad NoSharedMemory   --readFilesIn outputs/trimmed/sample_001_extracted_trimmed_R1.fastq.gz      --readFilesCommand zcat      --limitIObufferSize 500000   500000      --limitOutSJcollapsed 5000000   --limitBAMsortRAM 500000   --outFileNamePrefix outputs/aligned/sample_001.   --outSAMtype BAM   SortedByCoordinate      --outSAMattributes NH   HI   NM   MD      --outFilterType BySJout   --outFilterMultimapNmax 200   --outFilterMismatchNmax 999   --outFilterMismatchNoverLmax 0.6   --alignIntronMin 20   --alignIntronMax 1000000   --alignMatesGapMax 1000000   --alignSJoverhangMin 8   --alignSJDBoverhangMin 1
+----------------------------------------
+
+Number of fastq files for each mate = 1
+
+   Input read files for mate 1 :
+-rw-r--r-- 1 root root 445661 Oct 17 19:05 outputs/trimmed/sample_001_extracted_trimmed_R1.fastq.gz
+
+   readsCommandsFile:
+exec > "outputs/aligned/sample_001._STARtmp/tmp.fifo.read1"
+echo FILE 0
+zcat      "outputs/trimmed/sample_001_extracted_trimmed_R1.fastq.gz"
+
+ParametersSolo: --soloCellFilterType CellRanger2.2 filtering parameters:  3000 0.99 10
+Finished loading and checking parameters
+Reading genome generation parameters:
+### /opt/conda/envs/test-env/bin/STAR-avx2   --runMode genomeGenerate      --runThreadN 8   --genomeDir res/genome   --genomeFastaFiles res/genome/genome_fasta.fastq      --genomeSAindexNbases 11   --sjdbGTFfile res/genome/genome_annotation.gtf   --sjdbOverhang 99
+### GstrandBit=32
+versionGenome                 2.7.4a     ~RE-DEFINED
+genomeType                    Full     ~RE-DEFINED
+genomeFastaFiles              res/genome/genome_fasta.fastq        ~RE-DEFINED
+genomeSAindexNbases           11     ~RE-DEFINED
+genomeChrBinNbits             18     ~RE-DEFINED
+genomeSAsparseD               1     ~RE-DEFINED
+genomeTransformType           None     ~RE-DEFINED
+genomeTransformVCF            -     ~RE-DEFINED
+sjdbOverhang                  99     ~RE-DEFINED
+sjdbFileChrStartEnd           -        ~RE-DEFINED
+sjdbGTFfile                   res/genome/genome_annotation.gtf     ~RE-DEFINED
+sjdbGTFchrPrefix              -     ~RE-DEFINED
+sjdbGTFfeatureExon            exon     ~RE-DEFINED
+sjdbGTFtagExonParentTranscripttranscript_id     ~RE-DEFINED
+sjdbGTFtagExonParentGene      gene_id     ~RE-DEFINED
+sjdbInsertSave                Basic     ~RE-DEFINED
+genomeFileSizes               66846370   546903633        ~RE-DEFINED
+Genome version is compatible with current STAR
+Number of real (reference) chromosomes= 1
+1	chr20	64444167	0
+--sjdbOverhang = 99 taken from the generated genome
+Started loading the genome: Fri Oct 17 19:07:22 2025
+
+Genome: size given as a parameter = 66846370
+SA: size given as a parameter = 546903633
+SAindex: size given as a parameter = 1
+Read from SAindex: pGe.gSAindexNbases=11  nSAi=5592404
+nGenome=66846370;  nSAbyte=546903633
+GstrandBit=32   SA number of indices=132582698
+Shared memory is not used for genomes. Allocated a private copy of the genome.
+Genome file size: 66846370 bytes; state: good=1 eof=0 fail=0 bad=0
+Loading Genome ... done! state: good=1 eof=0 fail=0 bad=0; loaded 66846370 bytes
+SA file size: 546903633 bytes; state: good=1 eof=0 fail=0 bad=0
+Loading SA ... done! state: good=1 eof=0 fail=0 bad=0; loaded 546903633 bytes
+Loading SAindex ... done: 24466875 bytes
+Finished loading the genome: Fri Oct 17 19:07:22 2025
+
+Processing splice junctions database sjdbN=11854,   pGe.sjdbOverhang=99 
+To accommodate alignIntronMax=1000000 redefined winBinNbits=18
+To accommodate alignIntronMax=1000000 and alignMatesGapMax=1000000, redefined winFlankNbins=4 and winAnchorDistNbins=8
+Opening the file: outputs/aligned/sample_001._STARtmp//FilterBySJoutFiles.mate1.thread0 ... ok
+Opening the file: outputs/aligned/sample_001._STARtmp//FilterBySJoutFiles.mate1.thread1 ... ok
+Opening the file: outputs/aligned/sample_001._STARtmp//FilterBySJoutFiles.mate1.thread2 ... ok
+Opening the file: outputs/aligned/sample_001._STARtmp//FilterBySJoutFiles.mate1.thread3 ... ok
+Opening the file: outputs/aligned/sample_001._STARtmp//FilterBySJoutFiles.mate1.thread4 ... ok
+Opening the file: outputs/aligned/sample_001._STARtmp//FilterBySJoutFiles.mate1.thread5 ... ok
+Opening the file: outputs/aligned/sample_001._STARtmp//FilterBySJoutFiles.mate1.thread6 ... ok
+Opening the file: outputs/aligned/sample_001._STARtmp//FilterBySJoutFiles.mate1.thread7 ... ok
+Created thread # 1
+Created thread # 2
+Created thread # 3
+Created thread # 4
+Created thread # 5
+Created thread # 6
+Created thread # 7
+Starting to map file # 0
+mate 1:   outputs/trimmed/sample_001_extracted_trimmed_R1.fastq.gz
+Thread #2 end of input stream, nextChar=-1
+Completed: thread #4
+Completed: thread #3
+Completed: thread #6
+Completed: thread #1
+Completed: thread #2
+Completed: thread #0
+Joined thread # 1
+Joined thread # 2
+Joined thread # 3
+Joined thread # 4
+Completed: thread #5
+Joined thread # 5
+Joined thread # 6
+Completed: thread #7
+Joined thread # 7
+Completed stage 1 mapping of outFilterBySJout mapping
+Detected 27 novel junctions that passed filtering, will proceed to filter reads that contained unannotated junctions
+Created thread # 1
+Completed: thread #1
+Created thread # 2
+Created thread # 3
+Completed: thread #3
+Created thread # 4
+Completed: thread #4
+Created thread # 5
+Created thread # 6
+Completed: thread #6
+Created thread # 7
+BAM sorting: 383 mapped reads
+BAM sorting bins genomic start loci:
+1	0	696246
+2	0	1359453
+3	0	2658363
+4	0	3682882
+5	0	4085963
+6	0	4719006
+7	0	6321256
+8	0	10576468
+9	0	12298997
+10	0	13716886
+11	0	14965529
+12	0	16022244
+13	0	17606866
+14	0	18648755
+15	0	20943904
+16	0	21922094
+17	0	24495961
+18	0	30746743
+19	0	31432354
+20	0	31599661
+21	0	32239652
+22	0	32714008
+23	0	32888455
+24	0	34103763
+25	0	34540855
+26	0	35393313
+27	0	35633859
+28	0	36020294
+29	0	36469655
+30	0	36840750
+31	0	37113710
+32	0	38270613
+33	0	38584857
+34	0	40947543
+35	0	41504002
+36	0	42668760
+37	0	44236385
+38	0	45536714
+39	0	45770620
+40	0	47209803
+41	0	48198648
+42	0	49032426
+43	0	49408283
+44	0	50812326
+45	0	51750057
+46	0	53643845
+47	0	54679737
+48	0	55481964
+Completed: thread #2
+Completed: thread #5
+Completed: thread #7
+Completed: thread #0
+Joined thread # 1
+Joined thread # 2
+Joined thread # 3
+Joined thread # 4
+Joined thread # 5
+Joined thread # 6
+Joined thread # 7
+Oct 17 19:07:29 ..... finished mapping
+RAM after mapping:
+VmPeak:	 3682892 kB; VmSize:	 3419732 kB; VmHWM:	 3364492 kB; VmRSS:	 3103384 kB; 
+RAM after freeing genome index memory:
+VmPeak:	 3682892 kB; VmSize:	 2796464 kB; VmHWM:	 3364492 kB; VmRSS:	 2480044 kB; 
+Oct 17 19:07:29 ..... started sorting BAM
+Max memory needed for sorting = 87712
+ALL DONE!
