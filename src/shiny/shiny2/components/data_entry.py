@@ -51,3 +51,14 @@ data_entry_ui = ui.page_fillable(
             col_widths=(3,3,6)
         )
 )
+
+
+##################### data entry server #################
+
+def data_entry_server(input, output, session):
+    
+    @reactive.effect
+    @reactive.event(input.start_pipeline)
+    def start_pipeline_event():
+        print("pipeline kicked off")
+        ui.update_action_button("start_pipeline", disabled=True)
