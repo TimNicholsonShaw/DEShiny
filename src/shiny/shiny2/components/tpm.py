@@ -16,3 +16,6 @@ tpm_ui = ui.page_sidebar(
         ui.card_header("Gene Counts")
     )
 )
+
+def tpm_server(input, output, server):
+    pass
