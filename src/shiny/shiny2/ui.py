@@ -5,6 +5,7 @@ from components.demux_stats import demux_stats_ui
 from components.align_stats import align_stats_ui
 from components.dedup_stats import dedup_stats_ui
 from components.tpm import tpm_ui
+import os
 
 app_ui = ui.page_navbar(
             ui.nav_panel(
@@ -33,6 +34,6 @@ app_ui = ui.page_navbar(
                 ),
             ui.nav_spacer(),
             id="page",
-            title="DE Shiny"
+            title="TEST "*10 if os.environ.get("TEST", False) else "DE Shiny"
 
 )

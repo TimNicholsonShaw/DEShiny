@@ -1,24 +1,33 @@
-from shiny import ui, reactive, render
+from shiny import ui, reactive, render, req
 import pandas as pd
 import os, subprocess
+from shiny_validate import InputValidator, check
+
 
 # FIXME remove keep-incomplete
-snakemake_cmd = """conda run --no-capture-output -n test-env snakemake \
+snakemake_cmd = """
+conda run --no-capture-output -n test-env snakemake \
 --snakefile src/Snakefile --configfile res/snakemakeconfig.yaml --cores all \
 --keep-incomplete
 """
 
-test_snakemake_cmd = """conda run --no-capture-output -n test-env snakemake --version
+test_snakemake_cmd = """
+conda run --no-capture-output -n test-env snakemake --version
 """
 
 shutdown_cmd = "ps -afx | grep tail | awk '{print $1}' | xargs kill -9"
 
 
+############ reactive globals ################
+sample_sheet_df = reactive.value(pd.DataFrame())
+samples = reactive.value([])
+
+
 
 ################ data entry page UI ###################
-
 data_entry_ui = ui.layout_columns(
     ui.page_fillable(
+
         ui.card( # Sample sheet and fastq location entry
             ui.card_header("Input Files"),
             ui.input_text("r1_loc", 
@@ -69,18 +78,39 @@ data_entry_ui = ui.layout_columns(
     ),
         ui.card(
             ui.card_header("Sample sheet"),
-            ui.output_data_frame("sample_sheet_df")
+            ui.output_data_frame("sample_sheet_render")
         )
 )
-##################### data entry server #################
 
+##################### data entry server #################
 def data_entry_server(input, output, session):
+    input_validator = InputValidator()
+    input_validator.add_rule("r1_loc", check.required())
+    input_validator.add_rule("r1_loc", check.url())
+    input_validator.add_rule("r2_loc", check.required())
+    input_validator.add_rule("r2_loc", check.url())
+    input_validator.add_rule("sample_sheet", check.required())
+    input_validator.add_rule("genome_fasta_loc", check.required())
+    input_validator.add_rule("genome_fasta_loc", check.url())        
+    input_validator.add_rule("annotation_loc", check.required())
+    input_validator.add_rule("annotation_loc", check.url())
+    input_validator.enable()
+
+    # Set a test sample sheet for testing mode
+    if os.environ.get("TEST", False):
+        sample_sheet_loc = "tests/sample-sheet.csv"
+        sample_sheet_df.set(pd.read_csv(sample_sheet_loc))
     
     @reactive.effect
     @reactive.event(input.start_pipeline)
     def start_pipeline_event():
+        # TODO Add more visual cues if input is invalid
+        if not input_validator.is_valid():
+            print("Check inputs")
+        req(input_validator.is_valid())
         print("pipeline kicked off")
-        subprocess.run(test_snakemake_cmd, shell=True) # FIXME test cmd
+        print(samples())
+        #subprocess.run(test_snakemake_cmd, shell=True) # FIXME test cmd
         #ui.update_action_button("start_pipeline", disabled=True)
 
     @reactive.effect
@@ -90,5 +120,30 @@ def data_entry_server(input, output, session):
         return
 
     @render.data_frame
-    def sample_sheet_df() -> render.DataTable: # FIXME Temporary sample-sheet location
-        return render.DataTable(pd.read_csv("tests/sample-sheet.csv"))
+    def sample_sheet_render():
+        #return render.DataTable(pd.read_csv("tests/sample-sheet.csv"))
+        return render.DataTable(sample_sheet_df())
+    
+    @reactive.effect
+    @reactive.event(input.sample_sheet)
+    def set_sheet_sample_df():
+
+        if os.environ.get("TEST", False):
+            sample_sheet_loc = "tests/sample-sheet.csv"
+            sample_sheet_df.set(pd.read_csv(sample_sheet_loc))
+            return
+        
+        if not input.sample_sheet():
+            return
+        
+        sample_sheet_loc = input.sample_sheet()[0]["datapath"]
+        sample_sheet_df.set(pd.read_csv(sample_sheet_loc))
+
+    @reactive.effect
+    def set_sample_names() -> None:
+        if sample_sheet_df().empty:
+            return
+        else:
+            samples.set(
+                sample_sheet_df()["sample_name"].values
+            )
