@@ -10,11 +10,11 @@ import os
 app_ui = ui.page_navbar(
             ui.nav_panel(
                 "Data Entry", 
-                data_entry_ui
+                data_entry_ui("data_entry_module")
             ),
             ui.nav_panel(
                 "Pipeline Status",
-                status_monitor_ui
+                status_monitor_ui("status_monitor_module")
             ),
             ui.nav_panel(
                 "Demux Stats",
@@ -30,7 +30,7 @@ app_ui = ui.page_navbar(
                 ),
             ui.nav_panel(
                 "TPM",
-                tpm_ui
+                tpm_ui("tpm_ui_module")
                 ),
             ui.nav_spacer(),
             id="page",

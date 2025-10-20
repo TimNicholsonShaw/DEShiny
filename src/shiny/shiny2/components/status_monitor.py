@@ -1,7 +1,8 @@
-from shiny import reactive, ui, render
+from shiny import reactive, ui, render, module
 from pathlib import Path
 import pandas as pd
-from components.data_entry import samples
+
+
 
 # hard coded resources
 emoji_dict = { # emojis used to represent statuses in the progress tables
@@ -9,82 +10,112 @@ emoji_dict = { # emojis used to represent statuses in the progress tables
     "running":"🏃",
     "finished":"✅"
 }
-sample_steps = ["extract", "trim", "align", "dedup"]
-bulk_steps = ["get_data", "demux", "make_index", "feature_counts"]
-
-
-# hard coded log locations
-progress_log_loc = Path("logs/progress.log")
-bulk_progress_log_loc =Path("logs/bulk_progress.log")
-
-# monitor last known position of read in progress logs
-progress_log_pos = reactive.value(0)
-sample_progress_df = reactive.value(
-    pd.DataFrame(
-        emoji_dict["not_started"],
-        index=["bulk_step"],
-        columns=bulk_steps
-    )
-)
-
-bulk_progress_log_pos = reactive.value(0)
-bulk_progress_df = reactive.value(
-    pd.DataFrame(
-        emoji_dict["not_started"],
-        index=["bulk_step"],
-        columns=bulk_steps
-    )
-)
-
-# makes progress monitor functions
-def make_progress_monitor(reactive_file_loc:Path, reactive_pos:reactive.value):
-    @reactive.file_reader(reactive_file_loc)
-    def return_new_progress_log_lines(loc=reactive_file_loc, pos=reactive_pos):
-        buffer = []
-        while True:
-            try:
-                with open(loc, 'r') as log:
-                    log.seek(pos.get())
-                    line=log.readline().rstrip()
-                    pos.set(log.tell())
-                    if line:
-                        buffer.append(line)
-                    else:
-                        break
-            except:
-                return buffer
-        return buffer
-    return return_new_progress_log_lines
-    
-
-# instantiated progress monitor functions
-sample_progress_log_buffer = make_progress_monitor(progress_log_loc, progress_log_pos)
-bulk_progress_log_buffer = make_progress_monitor(bulk_progress_log_loc, bulk_progress_log_pos)
-
-
 
 ################## ui ####################
 
-status_monitor_ui = ui.page_fillable(
-    ui.card(
-        ui.card_header("Bulk Process Status"),
-        ui.output_data_frame("bulk_status_table")
-    ),
-    ui.card(
-        ui.card_header("Sample Progress Status"),
-        ui.output_data_frame("sample_progress_table")
+@module.ui
+def status_monitor_ui():
+    return ui.page_fillable(
+        ui.card(
+            ui.card_header("Bulk Process Status"),
+            ui.output_data_frame("bulk_status_table")
+        ),
+        ui.card(
+            ui.card_header("Sample Progress Status"),
+            ui.output_data_frame("sample_status_table")
+        )
     )
-)
 
+################ server ###############
+@module.server
+def status_monitor_server(input, output, session, samples):
 
-def status_monitor_server(input, output, session):
-    @render.data_frame
-    def bulk_status_table():
-        df = bulk_progress_df()
-        for line in bulk_progress_log_buffer():
+# FIXME sample progress and bulk progress should read from a stream
+
+    ################### sample progress #####################
+    sample_steps = ["extract", "trim", "align", "dedup"]
+    sample_progress_df = reactive.value(pd.DataFrame())
+    sample_progress_path = Path("logs/progress.log")
+
+    @reactive.calc
+    def populate_progress_df():
+        sample_names = samples()
+        with reactive.isolate():
+            if sample_progress_df().empty:
+                sample_progress_df.set( pd.DataFrame(
+                    emoji_dict["not_started"],
+                    index=sample_names,
+                    columns=sample_steps
+                ).reset_index().rename(columns={"index":"sample_name"})\
+                .set_index("sample_name", drop=False))   
+        
+        return sample_progress_df
+    
+    def update_progress_df():
+        for line in open(sample_progress_path):
             line = line.rstrip().split(",")
-            df.loc["bulk_step", line[1]] = emoji_dict[line[2]]
+            sample_progress_df().loc[line[0], line[1]] = emoji_dict[line[2]]
+        
+        return sample_progress_df
 
-        bulk_progress_df.set(df)
+    @render.data_frame
+    @reactive.file_reader(sample_progress_path)
+    def sample_status_table():
+        populate_progress_df()
+        return render.DataGrid(
+            update_progress_df().get(),
+            styles=[
+                    {
+                        "class":"text-center"
+                    },
+                    {
+                        "names":True
+                    },
+                ]
+            )  
+    
+    ################## bulk progress ####################
 
-        return render.DataTable(df)
+    bulk_steps = ["get_data", "demux", "make_index", "feature_counts"]
+    bulk_progress_path = Path("logs/bulk_progress.log")
+    bulk_progress_df = reactive.value(
+        pd.DataFrame(
+            emoji_dict["not_started"],
+            index=["bulk_step"],
+            columns=bulk_steps
+        )
+    )
+
+    def update_bulk_status_table():
+        for line in open(bulk_progress_path, "r"):
+                line = line.rstrip().split(",")
+                bulk_progress_df().loc["bulk_step", line[1]] = emoji_dict[line[2]]
+
+        return bulk_progress_df
+
+    @render.data_frame
+    @reactive.file_reader(bulk_progress_path)
+    def bulk_status_table():
+        return render.DataGrid(
+            update_bulk_status_table().get(),
+            styles=[
+                    {
+                        "class":"text-center"
+                    },
+                    {
+                        "names":True
+                    },
+                ]
+            )
+
+
+
+
+
+
+    
+
+
+
+
+    
