@@ -18,19 +18,19 @@ app_ui = ui.page_navbar(
             ),
             ui.nav_panel(
                 "Demux Stats",
-                demux_stats_ui
+                demux_stats_ui("demux_stats_module")
             ),
             ui.nav_panel(
                 "Align Stats",
-                align_stats_ui
+                align_stats_ui("align_stats_module")
                 ),
             ui.nav_panel(
                 "Dedup Stats",
-                dedup_stats_ui
+                dedup_stats_ui("dedup_stats_module")
                 ),
             ui.nav_panel(
                 "TPM",
-                tpm_ui("tpm_ui_module")
+                tpm_ui("tpm_module")
                 ),
             ui.nav_spacer(),
             id="page",

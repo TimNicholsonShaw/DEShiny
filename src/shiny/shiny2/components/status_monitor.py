@@ -107,15 +107,3 @@ def status_monitor_server(input, output, session, samples):
                     },
                 ]
             )
-
-
-
-
-
-
-    
-
-
-
-
-    
