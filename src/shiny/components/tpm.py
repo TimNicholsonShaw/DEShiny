@@ -64,6 +64,7 @@ def tpm_server(input, output, server, samples):
         except:
             return
         
+    # FIXME doesn't work if user examines tab before pipeline is done
     @render.data_frame
     def render_gene_counts():
         df = get_gene_counts()
