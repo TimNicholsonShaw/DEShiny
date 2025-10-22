@@ -1,11 +1,14 @@
-import subprocess
-import os
+import subprocess, os, shutil
+from pathlib import Path
 
+test_logs = Path("tests/sample_files/logs/")
+test_outputs = Path("tests/sample_files/outputs/")
 
 if __name__=="__main__":
 
     if os.environ.get("TEST", False):
-        pass
+        shutil.move(test_logs, "./")
+        shutil.move(test_outputs, "./")
 
 
     elif not os.environ.get("TEST", False):
@@ -24,23 +27,23 @@ if __name__=="__main__":
 
 
 
-        # run shiny app
-        subprocess.Popen(
-            [
-                "conda",
-                "run",
-                "--no-capture-output",
-                "-n",
-                "test-env",
-                "shiny",
-                "run",
-                "src/shiny/app.py",
-                "--host",
-                "0.0.0.0",
-                "--port",
-                "8080",
-                "-r"
-            ]
-        )
+    # run shiny app
+    subprocess.Popen(
+        [
+            "conda",
+            "run",
+            "--no-capture-output",
+            "-n",
+            "test-env",
+            "shiny",
+            "run",
+            "src/shiny/shiny2/app.py", # FIXME temporary location for app.py
+            "--host",
+            "0.0.0.0",
+            "--port",
+            "8080",
+            "-r"
+        ]
+    )
 
 
