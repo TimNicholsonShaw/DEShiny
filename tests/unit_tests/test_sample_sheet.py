@@ -49,7 +49,9 @@ def test_add_sample_to_sample_sheet():
     assert len(test_sample_sheet) == 9
 
 def test_remove_sample_from_sample_sheet():
-    pass
+    test_sample_sheet = Sample_Sheet.from_csv(Path("tests/sample-sheet.csv"))
+    test_sample_sheet.remove_sample("sample_008")
+    assert len(test_sample_sheet) == 7
 
 def test_different_index_lengths_not_valid():
     pass
@@ -70,7 +72,10 @@ def test_wrong_header_names():
     with pytest.raises(WrongHeader):
         Sample_Sheet.from_pandas(df)
     
-    
+
 def test_extra_columns_in_sample_sheet_ok():
-    pass
+    df = pd.read_csv(Path("tests/sample-sheet.csv"))
+    df["blurp"] = 5
+
+    Sample_Sheet.from_pandas(df)
 
