@@ -1,11 +1,23 @@
 from pathlib import Path
 import pandas as pd
+from statistics import mode
 
 class WrongHeader(Exception):
-    def __init__(self, header, message):
-        self.header=header
+    def __init__(self, message, bad_header):
+        super().__init__(message)
+        self.bad_header=bad_header
         self.message=message
-        super().__init__(self.message)
+
+class BarcodeError(Exception):
+    def __init__(self, message, problem_samples):
+        super().__init__(message)
+        self.problem_samples = problem_samples
+
+class SampleError(Exception):
+    def __init__(self, message, bad_sample):
+        super().__init__(message)
+        self.bad_sample = bad_sample
+        
 
 # TODO refactor with custom exceptions
 class Sample:
@@ -49,59 +61,84 @@ class Sample:
     
     def __repr__(self):
         return f'{self.name} -> i7:{self.i7} i5:{self.i5} i1:{self.i1}'
+    
+    def __eq__(self, other):
+        return all([self.name==other.name,
+                   self.i7==other.i7,
+                   self.i5==other.i5,
+                   self.i1==other.i1])
 
 
 class Sample_Sheet:
-    def __init__(self, samples:list[Sample]=[]):
-        # TODO refactor as dictionary
+    def __init__(self, samples:dict[Sample]={}):
         self.samples = samples
 
     @staticmethod
     def from_csv(sample_sheet_path:Path):
 
         df = pd.read_csv(sample_sheet_path)
-        Sample_Sheet.check_header(df.columns)
 
-        # TODO refactor into a separate function shared by from_csv and from_pandas
-        out_samples = []
-        for i in range(len(df)):
-            out_samples.append(
-                Sample(df['sample_name'][i],
-                       df['i7'][i],
-                       df['i5'][i],
-                       df['i1'][i]
-                )
-            )
-        return Sample_Sheet(out_samples)
+        return Sample_Sheet.from_pandas(df)
     
     @staticmethod
     def from_pandas(df:pd.DataFrame):
-        Sample_Sheet.check_header(df.columns)
+        Sample_Sheet._check_header(df.columns)
 
-        out_samples = []
+        out_samples = {}
         for i in range(len(df)):
-            out_samples.append(
-                Sample(df['sample_name'][i],
+            out_samples[df['sample_name'][i]] = Sample(df['sample_name'][i],
                        df['i7'][i],
                        df['i5'][i],
                        df['i1'][i]
-                )
             )
+        sample_sheet = Sample_Sheet(out_samples)
+        sample_sheet._check_index_lengths()
         return Sample_Sheet(out_samples)
 
-    @staticmethod
-    def check_header(header:list[str]):
+
+    def _check_header(header:list[str]):
         correct_headers = ['sample_name', 'i7', 'i5', 'i1']
         if not all(col_name in header for col_name in correct_headers):
             raise(WrongHeader(header, f"Headers you provided were: {header}. Headers should be: {correct_headers}"))
         
     def add_sample(self, sample:Sample):
-        self.samples.append(sample)
+        self.samples[sample.name] = sample
 
-    def remove_sample(self, sample:Sample):
-        pass
+    def remove_sample(self, sample:Sample|str):
+        if type(sample) == str:
+            del self.samples[sample]
+        elif type(sample) == Sample:
     
+            for index, value in self.samples.items():
+                if value == sample:
+                    del self.samples[index]
+                    break
+    
+    def _check_index_lengths(self) -> bool:
+        i7_length = mode([len(sample.i7) for _, sample in self.samples.items()])
+        i5_length = mode([len(sample.i5) for _, sample in self.samples.items()])
+        i1_length = mode([len(sample.i1) for _, sample in self.samples.items()])
+
+        problem_samples = {}
+
+        for name, sample in self.samples.items():
+            if len(sample.i7) != i7_length:
+                problem_samples[name] = problem_samples.get(name, []) + ["i7"]
+            if len(sample.i5) != i5_length:
+                problem_samples[name] = problem_samples.get(name, []) + ["i5"]
+            if len(sample.i1) != i1_length:
+                problem_samples[name] = problem_samples.get(name, []) + ["i1"]
+        
+        if len(problem_samples) > 0:
+            raise(BarcodeError("Barcodes different lengths", problem_samples))
+        
+        return True
+
+
+        
     def __len__(self):
         return len(self.samples)
 
-
+if __name__ == "__main__":
+    sample_sheet = Sample_Sheet.from_csv("tests/sample-sheet.csv")
+    sample_sheet._check_index_lengths()
