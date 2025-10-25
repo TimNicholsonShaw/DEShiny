@@ -1,6 +1,7 @@
 from pathlib import Path
 import pandas as pd
 from statistics import mode
+from collections import Counter
 
 class WrongHeader(Exception):
     def __init__(self, message, bad_header):
@@ -67,11 +68,14 @@ class Sample:
                    self.i7==other.i7,
                    self.i5==other.i5,
                    self.i1==other.i1])
+    
+    def get_smashed_barcode(self):
+        return f'{self.i7}{self.i5}{self.i1}'
 
 
 class Sample_Sheet:
-    def __init__(self, samples:dict[Sample]={}):
-        self.samples = samples
+    def __init__(self, samples:list[Sample]):
+        self.samples = samples # dict version
 
     @staticmethod
     def from_csv(sample_sheet_path:Path):
@@ -84,15 +88,18 @@ class Sample_Sheet:
     def from_pandas(df:pd.DataFrame):
         Sample_Sheet._check_header(df.columns)
 
-        out_samples = {}
+        out_samples = []
         for i in range(len(df)):
-            out_samples[df['sample_name'][i]] = Sample(df['sample_name'][i],
+            out_samples.append(Sample(df['sample_name'][i],
                        df['i7'][i],
                        df['i5'][i],
                        df['i1'][i]
+                        )
             )
         sample_sheet = Sample_Sheet(out_samples)
+        sample_sheet._check_valid_samples()
         sample_sheet._check_index_lengths()
+        sample_sheet._check_duplicate_barcodes_and_sample_names()
         return Sample_Sheet(out_samples)
 
 
@@ -102,43 +109,90 @@ class Sample_Sheet:
             raise(WrongHeader(header, f"Headers you provided were: {header}. Headers should be: {correct_headers}"))
         
     def add_sample(self, sample:Sample):
-        self.samples[sample.name] = sample
+        if sample.name in [s.name for s in self.samples]:
+            raise(SampleError("Sample name already in use", sample.name))
+        if sample.get_smashed_barcode() in [s.get_smashed_barcode() for s in self.samples]:
+            raise(BarcodeError("Barcode already in use", sample.name))
+        self.samples.append(sample)
+        try:
+            self._check_index_lengths()
+        except BarcodeError as e:
+            self.remove_sample(sample)
+            raise(e)
 
-    def remove_sample(self, sample:Sample|str):
-        if type(sample) == str:
-            del self.samples[sample]
-        elif type(sample) == Sample:
-    
-            for index, value in self.samples.items():
-                if value == sample:
-                    del self.samples[index]
-                    break
+    def remove_sample(self, remove_sample:Sample|str):
+        if type(remove_sample) == Sample: remove_sample = remove_sample.name
+        
+        self.samples = [sample for sample in self.samples if sample.name != remove_sample]
     
     def _check_index_lengths(self) -> bool:
-        i7_length = mode([len(sample.i7) for _, sample in self.samples.items()])
-        i5_length = mode([len(sample.i5) for _, sample in self.samples.items()])
-        i1_length = mode([len(sample.i1) for _, sample in self.samples.items()])
+        i7_length = mode([len(sample.i7) for sample in self.samples])
+        i5_length = mode([len(sample.i5) for sample in self.samples])
+        i1_length = mode([len(sample.i1) for sample in self.samples])
 
         problem_samples = {}
 
-        for name, sample in self.samples.items():
+        for sample in self.samples:
             if len(sample.i7) != i7_length:
-                problem_samples[name] = problem_samples.get(name, []) + ["i7"]
+                problem_samples[sample.name] = problem_samples.get(sample.name, []) + ["i7"]
             if len(sample.i5) != i5_length:
-                problem_samples[name] = problem_samples.get(name, []) + ["i5"]
+                problem_samples[sample.name] = problem_samples.get(sample.name, []) + ["i5"]
             if len(sample.i1) != i1_length:
-                problem_samples[name] = problem_samples.get(name, []) + ["i1"]
+                problem_samples[sample.name] = problem_samples.get(sample.name, []) + ["i1"]
         
         if len(problem_samples) > 0:
             raise(BarcodeError("Barcodes different lengths", problem_samples))
         
         return True
+    
+    def _check_valid_samples(self):
+        for sample in self.samples:
+            if not sample.is_valid():
+                raise(SampleError("invalid sample", sample))
+            
+    def _check_duplicate_barcodes_and_sample_names(self):
+        barcodes = []
+        sample_names = []
+        for sample in self.samples:
+            sample_names.append(sample.name)
+            barcodes.append(f'{sample.i7}{sample.i5}{sample.i1}')
 
+        sample_name_duplicates = [item for item, count in Counter(sample_names).items() if count > 1]
+        barcode_duplicates = [item for item, count in Counter(barcodes).items() if count > 1]
+
+
+        if len(sample_name_duplicates) > 0:
+            raise(SampleError("Duplicate sample names", sample_name_duplicates))
+        
+        if len(barcode_duplicates) > 0:
+            bad_samples = []
+            # TODO make this less slow and dumb
+            for barcode in barcode_duplicates:
+                for i in range(len(barcodes)):
+                    if barcodes[i] == barcode: bad_samples.append(sample_names[i])
+            
+            raise(BarcodeError("Duplicate Barcodes", bad_samples))
 
         
     def __len__(self):
         return len(self.samples)
+    
+    def __repr__(self):
+        return "\n".join([sample.__repr__() for sample in self.samples])
 
 if __name__ == "__main__":
-    sample_sheet = Sample_Sheet.from_csv("tests/sample-sheet.csv")
-    sample_sheet._check_index_lengths()
+
+    df = pd.read_csv(Path("tests/sample-sheet.csv"))
+    duplicate_barcode = pd.DataFrame({"sample_name":["sample_009"], 
+                        "i7":["CGGGAACCCGCA"],
+                        "i5":["GTCTTTGGCCCG"],
+                        "i1":["AGTCTCAGCAAA"]})
+    
+
+    s_sheet = Sample_Sheet.from_pandas(pd.concat([df,
+                                            duplicate_barcode],
+                                            ignore_index=True)
+        )
+    
+    
+    print(s_sheet)

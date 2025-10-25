@@ -1,5 +1,5 @@
 import pytest
-from src.obj.sample_sheet import Sample, Sample_Sheet, WrongHeader, BarcodeError
+from src.obj.sample_sheet import Sample, Sample_Sheet, WrongHeader, BarcodeError, SampleError
 from pathlib import Path
 import pandas as pd
 
@@ -37,7 +37,7 @@ def test_read_in_from_csv():
     test_sample_sheet = Sample_Sheet.from_csv(Path("tests/sample-sheet.csv"))
 
     assert len(test_sample_sheet) == 8
-    for sample in test_sample_sheet.samples.values():
+    for sample in test_sample_sheet.samples:
         assert type(sample) == Sample
 
 def test_read_in_from_pandas_df():
@@ -47,7 +47,7 @@ def test_read_in_from_pandas_df():
 
 def test_add_sample_to_sample_sheet():
     test_sample_sheet = Sample_Sheet.from_csv(Path("tests/sample-sheet.csv"))
-    test_sample_sheet.add_sample(Sample("sample_009", "ATGCATGG", "TGCATGCA", "GCATGCAT"))
+    test_sample_sheet.add_sample(Sample("sample_009", "CGGGAACCCGCT","GTCTTTGGCCCT","CGGGAACCCGCA"))
     assert len(test_sample_sheet) == 9
 
 def test_remove_sample_from_sample_sheet_by_name():
@@ -91,22 +91,70 @@ def test_different_index_lengths_not_valid():
     assert problems["sample_011"] == ['i7', 'i1']
 
 def test_cant_add_index_wrong_length():
-    pass
+    test_sample_sheet = Sample_Sheet.from_csv(Path("tests/sample-sheet.csv"))
+    with pytest.raises(BarcodeError):
+        test_sample_sheet.add_sample(Sample("sample_009", "ATGCATGCGCATGAC", "TGCATGCA", "GCATGCAT"))
 
 def test_with_invalid_samples():
-    pass
+    df = pd.read_csv(Path("tests/sample-sheet.csv"))
+    bad_row1 = pd.DataFrame({"sample_name":["sample_009"], 
+                        "i7":["CGGGAQACCGCA"],
+                        "i5":["GTCTTTCCCCCT"],
+                        "i1":["CGGGAACCCGCA"]})
+    bad_row2 = pd.DataFrame({"sample_name":["sample_009"], 
+                        "i7":["CGGGAGACCGCA"],
+                        "i5":[7],
+                        "i1":["CGGGAACCCGCA"]})
 
+    with pytest.raises(SampleError) as exc_info:
+        Sample_Sheet.from_pandas(pd.concat([df,
+                                            bad_row1,], ignore_index=True))
+        Sample_Sheet.from_pandas(pd.concat([df,
+                                            bad_row2,], ignore_index=True))
+    
 def test_repeated_barcodes_invalid():
-    pass
+    df = pd.read_csv(Path("tests/sample-sheet.csv"))
+    duplicate_barcode = pd.DataFrame({"sample_name":["sample_009"], 
+                        "i7":["CGGGAACCCGCA"],
+                        "i5":["GTCTTTGGCCCT"],
+                        "i1":["AGTCTCAGCAAA"]})
+    
+    with pytest.raises(BarcodeError):
+        Sample_Sheet.from_pandas(pd.concat([df,
+                                            duplicate_barcode],
+                                            ignore_index=True)
+        )
 
 def test_repeated_sample_names_invalid():
-    pass
+    df = pd.read_csv(Path("tests/sample-sheet.csv"))
+    duplicate_name = pd.DataFrame({"sample_name":["sample_002"], 
+                        "i7":["CGGGAACCCGCA"],
+                        "i5":["GTCTTTGGCCCT"],
+                        "i1":["AGTCTCAGCAGG"]})
+    
+    df = pd.concat([df, duplicate_name], ignore_index=True)
 
+    print(df)
+    
+    with pytest.raises(SampleError):
+        Sample_Sheet.from_pandas(pd.concat([df,
+                                            duplicate_name],
+                                            ignore_index=True)
+        )
+    
 def test_cant_add_sample_name_already_present():
-    pass
+    test_sample_sheet = Sample_Sheet.from_csv(Path("tests/sample-sheet.csv"))
+    repeat_sample_name = Sample("sample_001","CGGGAACCCGCC","GTCTTTGGCGCT","AGTCTCAGCATA")
+    
+    with pytest.raises(SampleError):
+        test_sample_sheet.add_sample(repeat_sample_name)
 
 def test_cant_add_barcode_already_present():
-    pass
+    test_sample_sheet = Sample_Sheet.from_csv(Path("tests/sample-sheet.csv"))
+    repeat_sample_name = Sample("sample_009","CGGGAACCCGCA","GTCTTTGGCCCT","TCCTCTCTTCTA")
+    
+    with pytest.raises(BarcodeError):
+        test_sample_sheet.add_sample(repeat_sample_name)
 
 def test_wrong_header_names():
     df = pd.read_csv(Path("tests/sample-sheet.csv"))
@@ -115,7 +163,6 @@ def test_wrong_header_names():
     with pytest.raises(WrongHeader):
         Sample_Sheet.from_pandas(df)
     
-
 def test_extra_columns_in_sample_sheet_ok():
     df = pd.read_csv(Path("tests/sample-sheet.csv"))
     df["blurp"] = 5
