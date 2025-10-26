@@ -1,10 +1,13 @@
 # DEShiny
 ## A pipeline for processing and visualization of Lexogen Quantseq Pool data
 
-## Notes:
-- The docker image is available from timnicholsonshaw/deshiny
-- Shiny app will run on port 8080
-- Example sample sheet is available in the tests folder, default URLs should work for testing
+# basic useage
+```
+docker run -p 8080:8080 timnicholsonshaw/deshiny:latest
+```
+- Navigate to localhost:8080 in your browser
+- An example sample sheet is available [here](https://github.com/TimNicholsonShaw/DEShiny/blob/main/tests/sample-sheet.csv)
+- Other default values will work for a test run with the above sample sheet
 
 ## Features
 - A page for setting pipeline options with input validation. Sample sheet validation coming soon.
