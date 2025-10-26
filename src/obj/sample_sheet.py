@@ -195,4 +195,8 @@ if __name__ == "__main__":
         )
     
     
-    print(s_sheet)
+    df = pd.read_csv("~/Desktop/gene_counts.tsv", comment="#", delimiter="\t")
+    print(df.head(50))
+    #df = df.drop(columns=["Start", "End", "Strand", "Length", "Chr"])
+    print(df.columns)
+    df.sort_values(by=df.columns[1], ascending=False).head(1000).to_csv("tests/sample_files/outputs/gene_counts.tsv", sep="\t")

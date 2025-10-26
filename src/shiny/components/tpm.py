@@ -36,9 +36,9 @@ def tpm_server(input, output, server, samples):
         sample_names = list(samples())
         ui.update_selectize("sample_selectize", choices=sample_names)
 
+    # FIXME more gracefully handle no file
     @reactive.calc
     def get_gene_counts():
-
         df = pd.read_csv(gene_counts_path, comment="#", delimiter="\t")
         df = df.drop(columns=["Start", "End", "Strand", "Length", "Chr"])
         df.columns = ["Geneid"] + list(samples())
