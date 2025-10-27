@@ -30,11 +30,6 @@ if __name__=="__main__":
     # run shiny app
     subprocess.Popen(
         [
-            "conda",
-            "run",
-            "--no-capture-output",
-            "-n",
-            "test-env",
             "shiny",
             "run",
             "src/shiny/app.py", 

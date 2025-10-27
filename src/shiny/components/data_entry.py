@@ -6,13 +6,12 @@ from shiny_validate import InputValidator, check
 
 # FIXME remove keep-incomplete
 snakemake_cmd = """
-conda run --no-capture-output -n test-env snakemake \
---snakefile src/Snakefile --configfile res/snakemakeconfig.yaml --cores all \
---keep-incomplete
+snakemake --snakefile src/Snakefile --configfile res/snakemakeconfig.yaml \
+--cores all --keep-incomplete
 """
 
 test_snakemake_cmd = """
-conda run --no-capture-output -n test-env snakemake --version
+snakemake --version
 """
 
 shutdown_cmd = "ps -afx | grep tail | awk '{print $1}' | xargs kill -9"
