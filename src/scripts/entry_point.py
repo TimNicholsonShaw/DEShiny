@@ -24,6 +24,8 @@ if __name__=="__main__":
         open("outputs/dedup/dedup_summary.csv", "w").close()
         open("outputs/gene_counts.tsv","w").close()
         open("outputs/gene_counts.tsv.summary","w").close()
+        open("outputs/gene_counts.tsv", "w").close()
+        open("outputs/gene_counts.tsv.summary", "w").close()
 
 
 

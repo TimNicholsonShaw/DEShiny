@@ -22,29 +22,25 @@ def align_stats_ui():
 def align_stats_server(input, output, session):
     align_summary_path = Path("outputs/aligned/align_summary.csv")
     
-    # FIXME better error handling
     @reactive.calc
     @reactive.file_reader(align_summary_path)
     def get_align_df():
         try:
             return pd.read_csv(align_summary_path)
-        except:
-            return
+        except pd.errors.EmptyDataError:
+            return pd.DataFrame()
 
-    # FIXME better error handling
     @render.data_frame
     def align_table():
-        try:
+        df = get_align_df()
+        if not df.empty:
             return get_align_df()
-        except:
-            return
     
-    # FIXME better error handling
     @render_widget
     def align_graph():
-        try:
+        df = get_align_df()
+        if not df.empty:
             df = get_align_df()
             df["Uniquely mapped reads %"] = df["Uniquely mapped reads %"].str.rstrip("%").astype('float')
             return px.bar(df, x="sample_name", y="Uniquely mapped reads %")
-        except:
-            return
+

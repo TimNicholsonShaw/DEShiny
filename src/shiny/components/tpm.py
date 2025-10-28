@@ -8,7 +8,7 @@ def tpm_ui():
         ui.sidebar(
             ui.input_selectize(
                 "sample_selectize",
-                "Select Sample(s)", # TODO update to samples
+                "Select Sample(s)", 
                 choices=["A", "B"],
                 multiple=True
             ),
@@ -36,10 +36,13 @@ def tpm_server(input, output, server, samples):
         sample_names = list(samples())
         ui.update_selectize("sample_selectize", choices=sample_names)
 
-    # FIXME more gracefully handle no file
     @reactive.calc
+    @reactive.file_reader(gene_counts_path)
     def get_gene_counts():
-        df = pd.read_csv(gene_counts_path, comment="#", delimiter="\t")
+        try:
+            df = pd.read_csv(gene_counts_path, comment="#", delimiter="\t")
+        except pd.errors.EmptyDataError:
+            return pd.DataFrame()
         df = df.drop(columns=["Start", "End", "Strand", "Length", "Chr"])
         df.columns = ["Geneid"] + list(samples())
 
@@ -49,13 +52,14 @@ def tpm_server(input, output, server, samples):
 
         
     @reactive.calc
+    @reactive.file_reader(gene_counts_summary_path)
     def get_gene_counts_summary():
         try:
             df = pd.read_csv(gene_counts_summary_path, comment="#", delimiter="\t")
             df.columns = ["Status"] + list(samples())
             return df
-        except:
-            return
+        except pd.errors.EmptyDataError:
+            return pd.DataFrame()
         
     @render.data_frame
     def render_gene_counts_summary():
@@ -64,7 +68,7 @@ def tpm_server(input, output, server, samples):
         except:
             return
         
-    # FIXME doesn't work if user examines tab before pipeline is done
+
     @render.data_frame
     def render_gene_counts():
         df = get_gene_counts()

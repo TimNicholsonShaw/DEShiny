@@ -26,7 +26,7 @@ def demux_stats_ui():
 
 @module.server
 def demux_stats_server(input, output, session, samples):
-    # FIXME Better error handling
+    
     @reactive.calc
     @reactive.file_reader(demux_path)
     def get_demux_df():
@@ -36,18 +36,16 @@ def demux_stats_server(input, output, session, samples):
             df = df.set_index("sample_name", drop=False).reindex(sample_order)
             return df
         
-        except:
-            return
+        except pd.errors.EmptyDataError:
+            return pd.DataFrame()
     
 
     @render.data_frame
     def index_assignment_table():
         return get_demux_df()
     
-    # FIXME Better error handling
     @render_widget
     def index_assignment_graph():
-        try:
+        df = get_demux_df()
+        if not df.empty: 
             return px.bar(get_demux_df(), x="sample_name", y="written_reads")
-        except:
-            return
