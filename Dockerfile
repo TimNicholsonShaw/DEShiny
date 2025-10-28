@@ -25,4 +25,4 @@ COPY . .
 
 
 
-CMD /usr/local/bin/_entrypoint.sh && python src/scripts/entry_point.py & tail -f /dev/null
+CMD ["/usr/local/bin/_entrypoint.sh", "&&",  "python", "src/scripts/entry_point.py", "&", "tail", "-f", "/dev/null"]
