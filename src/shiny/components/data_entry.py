@@ -3,11 +3,9 @@ import pandas as pd
 import os, subprocess, yaml
 from shiny_validate import InputValidator, check
 
-
-# FIXME remove keep-incomplete
+# TODO how to maintain input and information between sessions
 snakemake_cmd = """
-snakemake --snakefile src/Snakefile --configfile res/snakemakeconfig.yaml \
---cores all --keep-incomplete
+snakemake --snakefile src/Snakefile --configfile res/snakemakeconfig.yaml --cores all
 """
 
 test_snakemake_cmd = """
@@ -56,8 +54,7 @@ def data_entry_ui():
                                 value="https://github.com/TimNicholsonShaw/DEShiny/raw/refs/heads/main/tests/R2.fastq.gz",
                                 width="100%"),
 
-                # TODO add code to disable after pipeline kickoff
-                ui.input_file("sample_sheet", "Sample Sheet"),
+                ui.input_file("sample_sheet", "Sample Sheet", accept=[".csv"], multiple=False),
                 fill=True
             ),
 
@@ -126,6 +123,7 @@ def data_entry_server(input, output, session, samples):
     @reactive.event(input.start_pipeline)
     def start_pipeline_event():
         # TODO Add more visual cues if input is invalid
+
         if not input_validator.is_valid():
             print("Check inputs")
         req(input_validator.is_valid())
@@ -141,6 +139,11 @@ def data_entry_server(input, output, session, samples):
 
         ui.update_action_button("start_pipeline", disabled=True)
         subprocess.Popen(snakemake_cmd, shell=True) 
+
+        # disable inputs after pipeline kickoff
+        ui.remove_ui(selector="div.card-body", immediate=True)
+        ui.remove_ui(selector="div.card-body", immediate=True)
+        
 
     @reactive.effect
     @reactive.event(input.shutdown_container)
